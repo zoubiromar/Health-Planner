@@ -22,7 +22,9 @@ This repository is public. The starter schedule is in the app. Your name, prescr
 
 ## Open it
 
-The live site is [https://zoubiromar.github.io/Health-Planner/](https://zoubiromar.github.io/Health-Planner/). On an iPhone, open that link in Safari, tap Share, and choose **Add to Home Screen**.
+The public address is [https://zoubiromar.github.io/Health-Planner/](https://zoubiromar.github.io/Health-Planner/).
+
+GitHub Pages has to be switched on once before that address answers. In the repository, open **Settings → Pages** and set **Source** to **GitHub Actions**. The next deploy then publishes the site. On an iPhone, open the link in Safari, tap Share, and choose **Add to Home Screen**.
 
 `localhost` only works on a computer where you have started the app yourself. The “connection refused” page means nothing is running there.
 
