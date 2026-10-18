@@ -1,8 +1,7 @@
 import { AlertsDialog } from "./components/AlertsDialog";
 import { Disclaimer } from "./components/Disclaimer";
-import { IconCabinet, IconGroceries, IconPlan, IconToday } from "./components/Icons";
+import { IconGroceries, IconPlan, IconToday } from "./components/Icons";
 import { usePlanner, type View } from "./context";
-import { Cabinet } from "./views/Cabinet";
 import { Groceries } from "./views/Groceries";
 import { Plan } from "./views/Plan";
 import { Today } from "./views/Today";
@@ -10,7 +9,6 @@ import { Today } from "./views/Today";
 const NAV: { id: View; label: string; icon: typeof IconToday }[] = [
   { id: "today", label: "Today", icon: IconToday },
   { id: "plan", label: "Plan", icon: IconPlan },
-  { id: "cabinet", label: "Cabinet", icon: IconCabinet },
   { id: "groceries", label: "Groceries", icon: IconGroceries },
 ];
 
@@ -42,7 +40,6 @@ export function App() {
       <main className="main">
         {view === "today" ? <Today /> : null}
         {view === "plan" ? <Plan /> : null}
-        {view === "cabinet" ? <Cabinet /> : null}
         {view === "groceries" ? <Groceries /> : null}
       </main>
       <nav className="tabs" aria-label="Sections">

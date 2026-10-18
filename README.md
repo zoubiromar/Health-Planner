@@ -6,14 +6,16 @@ A personal planner for meals, supplements, cabinet stock, and reminders. It open
 
 The starter plan organizes an April 2026 dermatology sheet around a later problem: appetite is down and strength is down. It is not a new prescription.
 
-- Vitamin D continues at 2000 IU with breakfast. Magnesium continues as one 200 mg capsule at night.
+- Vitamin D continues at 2000 IU with breakfast, with a teaspoon of coconut oil. Magnesium is one 200 mg capsule at night, except on a Jamieson night.
 - Omega-3 is two softgels a day, with food. A probiotic is one capsule with breakfast.
-- Forcapil and Perfectil alternate, then Forcapil continues alone until you pause it.
+- Forcapil and Perfectil alternate, then Forcapil continues alone until Perfectil is refilled.
 - Ashwagandha is one capsule at night for eight weeks, then a two-week pause. The bottle's 6000 mg figure is the label claim. The dose is one capsule.
-- Centrum EC4 is one tablet with breakfast. It does not replace the two vitamin D softgels. A tablet already includes some vitamin D, zinc, selenium, and iron, so the 50 mg zinc tablet stays off.
-- Zinc 50 mg and Jamieson Power for Men start paused. One 50 mg zinc tablet is above the usual daily upper limit, and the Jamieson label dose stacks zinc and magnesium on top of the evening capsule.
+- Centrum EC4 is one tablet with breakfast, except on a Jamieson day. It does not replace the two vitamin D softgels.
+- Jamieson Power for Men is 3 caplets with lunch every 5th day. That morning skips Centrum, and that night skips the separate magnesium.
+- Zaatar is a pinch on Sunday, Tuesday, and Thursday. Fenugreek seeds are a pinch every 5th day, off the Jamieson days. Clove is a pinch in cooking on Wednesday and Saturday, never an oil.
+- Zinc 50 mg stays off. One tablet is above the usual daily upper limit, and Centrum, the hair capsule, and Jamieson already contain zinc.
 - Selenium and iron are not on the buy list. The Centrum tablet is the iron already in the plan.
-- Minoxidil is applied to a dry scalp twice a day, morning and night.
+- Minoxidil is applied to a dry scalp twice a day, morning and night. The bottle is not given a run-out date.
 
 Show the schedule to your doctor if you want it confirmed. Repeat vitamin D and magnesium around 12 January 2027, and ask about ferritin before any iron or extra zinc.
 
@@ -37,9 +39,9 @@ npm test
 npm run dev
 ```
 
-Open the printed local address. On a phone-width window, the four sections sit along the bottom: Today, Plan, Cabinet, and Groceries. On a wide window they sit in the left rail.
+Open the printed local address. On a phone-width window, the three sections sit along the bottom: Today, Plan, and Groceries. On a wide window they sit in the left rail, and the page uses the width of the window up to 1280 pixels.
 
-Today can move to yesterday, tomorrow, and later days. Nothing is scheduled before 18 October 2026. List, Timeline, and Hours are three ways to see the same checklist. List groups the day into morning, midday, and evening. Timeline follows the clock down the page. Hours lays each time in a card you can swipe.
+Today can move to yesterday, tomorrow, and later days. Nothing is scheduled before 18 October 2026. Timeline is the checklist, and each time can be opened or closed. Week is the same checklist laid out across the seven days.
 
 `npm run build` typechecks and writes `dist/`.
 
@@ -54,12 +56,14 @@ Browser notifications are a poor fit for iPhone. Today and Plan both have **Add 
 5. Dinner
 6. Night capsules
 
-Share the file to Calendar and allow the alerts. Checking a dose still happens in the planner. If you mark something out of stock, Today quiets that row. The calendar does not know the cabinet.
+Share the file to Calendar and allow the alerts. Checking a dose still happens in the planner. If you mark something out of stock, Today quiets that row. The calendar does not know the grocery week.
 
 Add the page to your Home Screen from the browser share menu if you want it to open like an app.
 
 ## What you can change
 
-Reminder times, profile, weekly weight, and stock counts are editable. The in-stock switch is yours: a dose you mark out of stock stays visible and does not count as missed. **I bought this** puts it back and adds the count you enter. The daily plan does not stop because a bottle count hit zero.
+Reminder times, profile, weekly weight, and stock counts are editable from Groceries, under Bottles on hand. The in-stock switch is yours: a dose you mark out of stock stays visible and does not count as missed. **I bought this** puts a refill back and adds the count. The daily plan does not stop because a bottle count hit zero.
+
+Groceries is one week at a time for the year that starts 18 October 2026. A full week asks for 7 cups of yogurt, a bag of dried apricots, a bag of almonds, a bar of dark chocolate, and a bunch of mint. A short week asks for fewer cups. A supplement is added only in the week its count runs out.
 
 **Start a blank plan** clears the schedule on this device and keeps the weight log. **Add a daily step** puts a new row on the timeline. **Restore the starter plan** brings the original schedule back.

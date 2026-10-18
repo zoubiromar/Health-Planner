@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useState } from "react";
 import { usePlanner } from "../context";
 import {
   addDays,
@@ -20,14 +20,11 @@ import {
   rowWarning,
   visibleItemsForSlot,
 } from "../model/schedule";
-import type { DayView, DueRow, Period, Slot } from "../model/types";
-
-const PERIODS: Period[] = ["Morning", "Midday", "Evening"];
+import type { DayView, DueRow, Slot } from "../model/types";
 
 const DAY_VIEWS: { id: DayView; label: string }[] = [
-  { id: "list", label: "List" },
   { id: "timeline", label: "Timeline" },
-  { id: "hours", label: "Hours" },
+  { id: "week", label: "Week" },
 ];
 
 export function Today() {
@@ -41,16 +38,19 @@ export function Today() {
   const protein = proteinTarget(state.profile.weightKg);
   const empty = state.blank && state.items.length === 0;
   const grouped = slotsWithRows(state.slots, rows);
-  const hoursRef = useRef<HTMLDivElement>(null);
   const currentSlotId = focus.kind === "item" ? focus.slot.id : "";
+  const [openSlots, setOpenSlots] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (state.dayView !== "hours" || !currentSlotId) return;
-    const root = hoursRef.current;
-    const card = root?.querySelector<HTMLElement>(`#hour-${currentSlotId}`);
-    if (!root || !card) return;
-    root.scrollTo({ left: Math.max(0, card.offsetLeft - 8), behavior: "auto" });
-  }, [state.dayView, selectedDate, currentSlotId]);
+    setOpenSlots({});
+  }, [selectedDate]);
+
+  function reveal(slotId: string, itemId: string) {
+    setOpenSlots((current) => ({ ...current, [slotId]: true }));
+    window.setTimeout(() => {
+      document.getElementById(`row-${itemId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 40);
+  }
 
   return (
     <div data-testid="today-view">
@@ -106,14 +106,15 @@ export function Today() {
             isToday={isToday}
             focus={focus}
             onOpen={() => {
-              if (focus.kind === "item") {
-                const element = document.getElementById(`row-${focus.item.id}`);
-                element?.scrollIntoView({ behavior: "smooth", block: "center" });
+              if (focus.kind !== "item") return;
+              if (state.dayView !== "timeline") {
+                dispatch({ type: "set-day-view", view: "timeline" });
               }
+              reveal(focus.slot.id, focus.item.id);
             }}
           />
 
-          <div className="segments view-switch" role="tablist" aria-label="How to see this day">
+          <div className="segments segments-two view-switch" role="tablist" aria-label="How to see this day">
             {DAY_VIEWS.map((option) => (
               <button
                 key={option.id}
@@ -134,26 +135,20 @@ export function Today() {
             </button>
           </div>
 
-          {state.dayView === "timeline" ? (
-            <TimelineView
-              grouped={grouped}
-              currentSlotId={isToday ? currentSlotId : ""}
-              date={selectedDate}
-              onGroceries={() => setView("groceries")}
-            />
-          ) : state.dayView === "hours" ? (
-            <HoursView
-              scrollerRef={hoursRef}
-              grouped={grouped}
-              currentSlotId={isToday ? currentSlotId : ""}
-              date={selectedDate}
+          {state.dayView === "week" ? (
+            <WeekBoard
+              selectedDate={selectedDate}
+              today={today}
+              planStart={state.planStart}
+              onSelect={setSelectedDate}
               onGroceries={() => setView("groceries")}
             />
           ) : (
-            <ListView
-              slots={state.slots}
-              rows={rows}
+            <TimelineView
+              grouped={grouped}
               currentSlotId={isToday ? currentSlotId : ""}
+              openSlots={openSlots}
+              onToggle={(slotId, open) => setOpenSlots((current) => ({ ...current, [slotId]: open }))}
               date={selectedDate}
               onGroceries={() => setView("groceries")}
             />
@@ -207,6 +202,7 @@ function DayBrowser({
             (entry) => entry.item.rule === "forcapil" || entry.item.rule === "perfectil",
           );
           const strength = dayRows.some((entry) => entry.item.id === "strength" && entry.status === "due");
+          const jamieson = dayRows.some((entry) => entry.item.id === "jamieson");
           return (
             <button
               key={iso}
@@ -219,8 +215,9 @@ function DayBrowser({
               <span className="day-date">{formatDayMonth(iso)}</span>
               {before ? <span className="day-note">Earlier</span> : null}
               {!before && hair ? <span className="day-note">{hair.item.name}</span> : null}
+              {!before && jamieson ? <span className="day-note">Jamieson</span> : null}
               {!before && strength ? <span className="day-note">Strength</span> : null}
-              {!before && !hair && !strength ? <span className="day-note">Meals</span> : null}
+              {!before && !hair && !strength && !jamieson ? <span className="day-note">Meals</span> : null}
             </button>
           );
         })}
@@ -235,107 +232,122 @@ function slotsWithRows(slots: Slot[], rows: DueRow[]): { slot: Slot; rows: DueRo
     .filter((entry) => entry.rows.length > 0);
 }
 
-function ListView({
-  slots,
-  rows,
-  currentSlotId,
-  date,
-  onGroceries,
-}: {
-  slots: Slot[];
-  rows: DueRow[];
-  currentSlotId: string;
-  date: string;
-  onGroceries: () => void;
-}) {
-  return (
-    <div data-testid="day-list">
-      {PERIODS.map((period) => (
-        <section key={period} className="period" aria-labelledby={`period-${period}`}>
-          <h2 id={`period-${period}`}>{period}</h2>
-          {slots
-            .filter((slot) => slot.period === period)
-            .map((slot) => (
-              <SlotBlock
-                key={slot.id}
-                slot={slot}
-                rows={visibleItemsForSlot(rows, slot.id)}
-                current={slot.id === currentSlotId}
-                date={date}
-                onGroceries={onGroceries}
-              />
-            ))}
-        </section>
-      ))}
-    </div>
-  );
+function slotStartsOpen(rows: DueRow[], current: boolean): boolean {
+  if (current) return true;
+  return rows.some((entry) => entry.item.consume > 0 || entry.item.rule === "minoxidil");
 }
 
 function TimelineView({
   grouped,
   currentSlotId,
+  openSlots,
+  onToggle,
   date,
   onGroceries,
 }: {
   grouped: { slot: Slot; rows: DueRow[] }[];
   currentSlotId: string;
+  openSlots: Record<string, boolean>;
+  onToggle: (slotId: string, open: boolean) => void;
   date: string;
   onGroceries: () => void;
 }) {
   return (
     <div className="timeline" data-testid="day-timeline">
-      {grouped.map(({ slot, rows }) => (
-        <article
-          key={slot.id}
-          className={slot.id === currentSlotId ? "timeline-stop is-current" : "timeline-stop"}
-        >
-          <header className="timeline-kicker">
-            <time dateTime={slot.time}>{slot.time}</time>
-            <h2>{slot.label}</h2>
-          </header>
-          <div className="rows">
-            {rows.map((entry) => (
-              <DoseRow key={entry.item.id} entry={entry} date={date} onGroceries={onGroceries} />
-            ))}
-          </div>
-        </article>
-      ))}
+      {grouped.map(({ slot, rows }) => {
+        const current = slot.id === currentSlotId;
+        const open = slot.id in openSlots ? openSlots[slot.id] : slotStartsOpen(rows, current);
+        const names = [...new Set(rows.map((entry) => entry.item.name))];
+        return (
+          <article
+            key={slot.id}
+            className={current ? "timeline-stop is-current" : "timeline-stop"}
+          >
+            <button
+              type="button"
+              className="timeline-toggle"
+              aria-expanded={open}
+              data-testid={`slot-toggle-${slot.id}`}
+              onClick={() => onToggle(slot.id, !open)}
+            >
+              <time dateTime={slot.time}>{slot.time}</time>
+              <h2>{slot.label}</h2>
+              <span className="quiet">{open ? "Hide" : names.join(" · ")}</span>
+            </button>
+            {open ? (
+              <div className="rows rows-wrap">
+                {rows.map((entry) => (
+                  <DoseRow key={entry.item.id} entry={entry} date={date} onGroceries={onGroceries} />
+                ))}
+              </div>
+            ) : null}
+          </article>
+        );
+      })}
     </div>
   );
 }
 
-function HoursView({
-  scrollerRef,
-  grouped,
-  currentSlotId,
-  date,
+function WeekBoard({
+  selectedDate,
+  today,
+  planStart,
+  onSelect,
   onGroceries,
 }: {
-  scrollerRef: RefObject<HTMLDivElement | null>;
-  grouped: { slot: Slot; rows: DueRow[] }[];
-  currentSlotId: string;
-  date: string;
+  selectedDate: string;
+  today: string;
+  planStart: string;
+  onSelect: (iso: string) => void;
   onGroceries: () => void;
 }) {
+  const { state } = usePlanner();
+  const days = weekDates(selectedDate);
+
   return (
-    <div className="hours" ref={scrollerRef} data-testid="day-hours">
-      {grouped.map(({ slot, rows: slotRows }) => (
-        <article
-          key={slot.id}
-          id={`hour-${slot.id}`}
-          className={slot.id === currentSlotId ? "hour-card is-current" : "hour-card"}
-        >
-          <header className="timeline-kicker">
-            <time dateTime={slot.time}>{slot.time}</time>
-            <h2>{slot.label}</h2>
-          </header>
-          <div className="rows">
-            {slotRows.map((entry) => (
-              <DoseRow key={entry.item.id} entry={entry} date={date} onGroceries={onGroceries} />
-            ))}
-          </div>
-        </article>
-      ))}
+    <div className="week-board" data-testid="day-week">
+      {days.map((iso) => {
+        const before = iso < planStart;
+        const dayRows = before ? [] : rowsForDate(state, iso);
+        return (
+          <section
+            key={iso}
+            className={iso === selectedDate ? "week-col is-selected" : "week-col"}
+            aria-current={iso === today ? "date" : undefined}
+          >
+            <button type="button" className="week-col-head" onClick={() => onSelect(iso)}>
+              <span className="day-name">{weekdayShort(iso)}</span>
+              <strong>{formatDayMonth(iso)}</strong>
+            </button>
+            {before ? (
+              <p className="quiet">Earlier</p>
+            ) : (
+              <div className="rows">
+                {state.slots.map((slot) => {
+                  const slotRows = visibleItemsForSlot(dayRows, slot.id);
+                  if (slotRows.length === 0) return null;
+                  return (
+                    <div key={slot.id} className="week-slot">
+                      <p className="quiet">
+                        {slot.time} {slot.label}
+                      </p>
+                      {slotRows.map((entry) => (
+                        <DoseRow
+                          key={entry.item.id}
+                          entry={entry}
+                          date={iso}
+                          compact
+                          onGroceries={onGroceries}
+                        />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }
@@ -371,43 +383,23 @@ function NowCard({
       <h2>{focus.item.name}</h2>
       <p>{focus.item.dose}</p>
       <button type="button" className="text-button" onClick={onOpen}>
-        Show on the list
+        Show on the timeline
       </button>
     </section>
   );
 }
 
-function SlotBlock({
-  slot,
-  rows,
-  current,
+function DoseRow({
+  entry,
   date,
   onGroceries,
+  compact = false,
 }: {
-  slot: Slot;
-  rows: DueRow[];
-  current: boolean;
+  entry: DueRow;
   date: string;
   onGroceries: () => void;
+  compact?: boolean;
 }) {
-  if (rows.length === 0) return null;
-
-  return (
-    <div className={current ? "slot slot-current" : "slot"}>
-      <header className="slot-head">
-        <time dateTime={slot.time}>{slot.time}</time>
-        <h3>{slot.label}</h3>
-      </header>
-      <div className="rows">
-        {rows.map((entry) => (
-          <DoseRow key={entry.item.id} entry={entry} date={date} onGroceries={onGroceries} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function DoseRow({ entry, date, onGroceries }: { entry: DueRow; date: string; onGroceries: () => void }) {
   const { state, dispatch } = usePlanner();
   const checked = Boolean(state.checks[checkKey(date, entry.item.id)]);
   const owned = pileFor(state, entry.item);
@@ -415,30 +407,31 @@ function DoseRow({ entry, date, onGroceries }: { entry: DueRow; date: string; on
   const low = owned && entry.status === "due" ? isRunningLow(owned) : false;
   const supply = owned ? daysOfSupply(owned) : null;
   const disabled = entry.status !== "due";
+  const rowId = compact ? `week-row-${date}-${entry.item.id}` : `row-${entry.item.id}`;
 
   return (
     <article
-      id={`row-${entry.item.id}`}
+      id={rowId}
       className={disabled ? "row is-muted" : checked ? "row is-done" : "row"}
-      data-testid={`row-${entry.item.id}`}
+          data-testid={compact ? `week-row-${date}-${entry.item.id}` : `row-${entry.item.id}`}
     >
       <label className="check">
         <input
           type="checkbox"
           checked={checked}
           disabled={disabled}
-          data-testid={`check-${entry.item.id}`}
-          aria-label={`${entry.item.name}, ${entry.item.dose}`}
+          data-testid={compact ? `week-check-${date}-${entry.item.id}` : `check-${entry.item.id}`}
+          aria-label={compact ? `${date}, ${entry.item.name}, ${entry.item.dose}` : `${entry.item.name}, ${entry.item.dose}`}
           onChange={() => dispatch({ type: "toggle-check", date, itemId: entry.item.id })}
         />
         <div className="row-copy">
           <span className="row-title">
             <strong>{entry.item.name}</strong>
             {entry.status === "muted" ? <span className="pill pill-alert">Out of stock</span> : null}
-            {low ? <span className="pill">Running low</span> : null}
+            {low && !compact ? <span className="pill">Running low</span> : null}
             <em>{entry.item.dose}</em>
           </span>
-          <p>{entry.item.note}</p>
+          {compact ? null : <p>{entry.item.note}</p>}
           {entry.status === "muted" ? (
             <p className="flag">
               <button
@@ -451,15 +444,17 @@ function DoseRow({ entry, date, onGroceries }: { entry: DueRow; date: string; on
               </button>
             </p>
           ) : null}
-          {entry.status === "paused-window" ? (
+          {!compact && entry.status === "paused-window" ? (
             <p className="flag">Paused this fortnight. It comes back after the two weeks.</p>
           ) : null}
-          {low ? <p className="flag">Running low{supply !== null ? `, about ${supply} days` : ""}.</p> : null}
-          {owned && owned.count === 0 && entry.status === "due" ? (
+          {!compact && low ? (
+            <p className="flag">Running low{supply !== null ? `, about ${supply} days` : ""}.</p>
+          ) : null}
+          {!compact && owned && owned.count === 0 && entry.status === "due" ? (
             <p className="flag">Count is at zero. Mark it out of stock if the bottle is empty.</p>
           ) : null}
-          {entry.reviewNote ? <p className="flag">{entry.reviewNote}</p> : null}
-          {warning ? <p className="flag">{warning}</p> : null}
+          {!compact && entry.reviewNote ? <p className="flag">{entry.reviewNote}</p> : null}
+          {!compact && warning ? <p className="flag">{warning}</p> : null}
         </div>
       </label>
     </article>

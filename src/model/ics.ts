@@ -37,6 +37,14 @@ function itemLine(item: PlanItem): string {
       return "Ashwagandha, 1 capsule, except during the two-week pause.";
     case "strength":
       return "Easy strength, 20 minutes, on Monday, Wednesday, and Saturday.";
+    case "jamieson":
+      return "Jamieson, 3 caplets, every 5th day. Skip Centrum that morning and magnesium that night.";
+    case "zaatar":
+      return "Zaatar, a pinch, on Sunday, Tuesday, and Thursday.";
+    case "fenugreek":
+      return "Fenugreek seeds, a pinch, every 5th day, not on a Jamieson day.";
+    case "clove":
+      return "Clove, a pinch in cooking, on Wednesday and Saturday. Spice only.";
     default:
       return `${item.name}: ${item.dose}.`;
   }

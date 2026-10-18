@@ -14,6 +14,8 @@ export type Action =
   | { type: "dismiss-disclaimer" }
   | { type: "answer-minoxidil"; answer: "yes" | "no" }
   | { type: "set-day-view"; view: DayView }
+  | { type: "toggle-grocery"; week: string; id: string }
+  | { type: "buy-refill"; week: string; stockId: string; add: number }
   | { type: "toggle-food"; id: string }
   | { type: "restock"; stockId: string; add: number }
   | { type: "set-lab-done"; done: boolean }
@@ -97,8 +99,24 @@ export function reducer(state: PlannerState, action: Action): PlannerState {
     case "dismiss-disclaimer":
       return { ...state, disclaimerSeen: true };
     case "set-day-view":
-      if (action.view !== "list" && action.view !== "timeline" && action.view !== "hours") return state;
+      if (action.view !== "timeline" && action.view !== "week") return state;
       return { ...state, dayView: action.view };
+    case "toggle-grocery": {
+      const key = `${action.week}:${action.id}`;
+      return {
+        ...state,
+        groceryChecks: { ...state.groceryChecks, [key]: !state.groceryChecks[key] },
+      };
+    }
+    case "buy-refill": {
+      if (!Number.isFinite(action.add) || action.add <= 0) return state;
+      const next = reducer(state, { type: "restock", stockId: action.stockId, add: action.add });
+      const key = `${action.week}:refill-${action.stockId}`;
+      return {
+        ...next,
+        groceryChecks: { ...next.groceryChecks, [key]: true },
+      };
+    }
     case "answer-minoxidil": {
       if (action.answer === "no") {
         return mapPile({ ...state, minoxidil: "no" }, "minoxidil", (pile) => ({

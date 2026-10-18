@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { bmi, daysBetween, proteinTarget, weekSunday } from "./dates";
+import { addDays, bmi, daysBetween, proteinTarget, weekSunday } from "./dates";
+import { planDaysInWeek, planYearEnd, projectRefills, snackLines } from "./groceries";
 import { alertSlots, buildCalendar } from "./ics";
 import { createStarter, upgradeState } from "./plan";
 import { reducer } from "./reducer";
@@ -32,8 +33,13 @@ describe("starter schedule", () => {
     expect(row("2026-10-18", "strength", state)).toBeUndefined();
     expect(row("2026-10-18", "walk", state)?.status).toBe("due");
     expect(row("2026-10-18", "zinc", state)).toBeUndefined();
-    expect(row("2026-10-18", "jamieson", state)).toBeUndefined();
-    expect(row("2026-10-18", "centrum", state)?.status).toBe("due");
+    expect(row("2026-10-18", "jamieson", state)?.item.slotId).toBe("lunch");
+    expect(row("2026-10-18", "centrum", state)).toBeUndefined();
+    expect(row("2026-10-18", "magnesium", state)).toBeUndefined();
+    expect(row("2026-10-18", "coconut-oil", state)?.status).toBe("due");
+    expect(row("2026-10-18", "zaatar", state)?.status).toBe("due");
+    expect(row("2026-10-18", "fenugreek", state)).toBeUndefined();
+    expect(row("2026-10-18", "clove", state)).toBeUndefined();
     expect(row("2026-10-18", "minoxidil-am", state)?.item.slotId).toBe("wake");
     expect(row("2026-10-18", "minoxidil-pm", state)?.item.slotId).toBe("night");
     expect(row("2026-10-18", "minoxidil", state)).toBeUndefined();
@@ -145,18 +151,30 @@ describe("stock", () => {
     expect(pile("ashwagandha", state).count).toBe(100);
   });
 
-  it("lets zinc and Jamieson return only when they are turned back on", () => {
+  it("lets zinc return only when it is turned back on", () => {
     const zincOn = reducer(createStarter(), { type: "set-paused", stockId: "zinc", paused: false });
     expect(row("2026-10-18", "zinc", zincOn)?.status).toBe("due");
     expect(row("2026-10-19", "zinc", zincOn)).toBeUndefined();
+    expect(projectRefills(zincOn, PLAN_START).some((line) => line.stockId === "zinc")).toBe(false);
+  });
 
-    const jamiesonOn = reducer(createStarter(), {
-      type: "set-paused",
-      stockId: "jamieson",
-      paused: false,
-    });
-    expect(row("2026-10-18", "jamieson", jamiesonOn)?.status).toBe("due");
-    expect(pile("jamieson", jamiesonOn).count).toBeNull();
+  it("uses Jamieson every 5th day and keeps the spices on their own days", () => {
+    expect(row("2026-10-19", "jamieson")).toBeUndefined();
+    expect(row("2026-10-19", "centrum")?.status).toBe("due");
+    expect(row("2026-10-19", "magnesium")?.status).toBe("due");
+    expect(row("2026-10-19", "zaatar")).toBeUndefined();
+    expect(row("2026-10-20", "fenugreek")?.status).toBe("due");
+    expect(row("2026-10-20", "zaatar")?.status).toBe("due");
+    expect(row("2026-10-21", "clove")?.status).toBe("due");
+    expect(row("2026-10-23", "jamieson")?.status).toBe("due");
+    expect(row("2026-10-23", "centrum")).toBeUndefined();
+    expect(row("2026-10-23", "magnesium")).toBeUndefined();
+    expect(row("2026-10-23", "fenugreek")).toBeUndefined();
+
+    const paused = reducer(createStarter(), { type: "set-paused", stockId: "jamieson", paused: true });
+    expect(row("2026-10-18", "jamieson", paused)).toBeUndefined();
+    expect(row("2026-10-18", "centrum", paused)?.status).toBe("due");
+    expect(row("2026-10-18", "magnesium", paused)?.status).toBe("due");
   });
 });
 
@@ -180,7 +198,9 @@ describe("phases, focus, and calendar", () => {
     const state = createStarter();
     const rows = rowsForDate(state, "2026-10-18");
     const evening = focusItem(rows, {}, state.slots, "2026-10-18", 21 * 60 + 40);
-    expect(evening).toMatchObject({ kind: "item", item: { id: "magnesium" }, waiting: false });
+    expect(evening).toMatchObject({ kind: "item", item: { id: "ashwagandha" }, waiting: false });
+    const nextNight = focusItem(rowsForDate(state, "2026-10-19"), {}, state.slots, "2026-10-19", 21 * 60 + 40);
+    expect(nextNight).toMatchObject({ kind: "item", item: { id: "magnesium" }, waiting: false });
 
     const early = focusItem(rows, {}, state.slots, "2026-10-18", 7 * 60);
     expect(early).toMatchObject({ kind: "item", item: { id: "tea" }, waiting: true });
@@ -208,7 +228,7 @@ describe("phases, focus, and calendar", () => {
     expect(unfolded).toContain("RRULE:FREQ=DAILY");
     expect(unfolded).toContain("Forcapil\\, 2 capsules");
     expect(unfolded).not.toContain("Zinc");
-    expect(unfolded).not.toContain("Jamieson");
+    expect(unfolded).toContain("every 5th day");
   });
 });
 
@@ -218,13 +238,12 @@ describe("profile and the blank plan", () => {
     expect(proteinTarget(54)).toBe(86);
   });
 
-  it("resets the weekly food list on the next Sunday and can start blank", () => {
-    let state = reducer(createStarter(), { type: "toggle-food", id: "eggs" });
-    state = reducer(state, { type: "sync-food-week", today: "2026-10-20" });
-    expect(state.foods.find((food) => food.id === "eggs")?.bought).toBe(true);
-    state = reducer(state, { type: "sync-food-week", today: "2026-10-25" });
+  it("keeps each week's grocery checks and can start blank", () => {
+    let state = reducer(createStarter(), { type: "toggle-grocery", week: "2026-10-18", id: "yogurt" });
+    state = reducer(state, { type: "toggle-grocery", week: "2026-10-25", id: "yogurt" });
+    expect(state.groceryChecks["2026-10-18:yogurt"]).toBe(true);
+    expect(state.groceryChecks["2026-10-25:yogurt"]).toBe(true);
     expect(weekSunday("2026-10-25")).toBe("2026-10-25");
-    expect(state.foods.find((food) => food.id === "eggs")?.bought).toBe(false);
 
     state = reducer(state, { type: "start-blank" });
     expect(rowsForDate(state, "2026-10-18")).toEqual([]);
@@ -281,10 +300,10 @@ describe("profile and the blank plan", () => {
     };
 
     const upgraded = upgradeState(legacy);
-    expect(upgraded.dayView).toBe("list");
+    expect(upgraded.dayView).toBe("timeline");
     expect(upgraded.minoxidil).toBe("yes");
     expect(upgraded.items.some((item) => item.id === "minoxidil")).toBe(false);
-    expect(row("2026-10-18", "centrum", upgraded)?.status).toBe("due");
+    expect(row("2026-10-19", "centrum", upgraded)?.status).toBe("due");
     expect(row("2026-10-18", "minoxidil-am", upgraded)?.status).toBe("due");
     expect(row("2026-10-18", "minoxidil-pm", upgraded)?.status).toBe("due");
     expect(upgraded.checks["2026-10-18:d3"]).toBe(true);
@@ -323,5 +342,68 @@ describe("profile and the blank plan", () => {
     expect(loadState(memory).profile.weightKg).toBe(54);
     memory.value = "{";
     expect(loadState(memory).items.length).toBeGreaterThan(0);
+  });
+});
+
+describe("the year of groceries", () => {
+  it("scales yogurt to the plan days in the week and buys a bag for a short week", () => {
+    expect(snackLines(PLAN_START, "2026-10-18").find((line) => line.id === "yogurt")?.quantity).toBe(
+      "7 cups",
+    );
+    const end = planYearEnd(PLAN_START);
+    const lastWeek = weekSunday(end);
+    const days = planDaysInWeek(PLAN_START, lastWeek);
+    expect(days.length).toBeLessThan(7);
+    expect(days.length).toBeGreaterThan(0);
+    const yogurt = snackLines(PLAN_START, lastWeek).find((line) => line.id === "yogurt");
+    expect(yogurt?.quantity).toBe(days.length === 1 ? "1 cup" : `${days.length} cups`);
+    expect(snackLines(PLAN_START, lastWeek).find((line) => line.id === "apricots")?.quantity).toBe(
+      "1 bag",
+    );
+    expect(snackLines(PLAN_START, "2026-10-11")).toEqual([]);
+  });
+
+  it("puts vitamin D on the week the bottle runs out, and not the week after", () => {
+    const lines = projectRefills(createStarter(), PLAN_START);
+    const vitamin = lines.find((line) => line.stockId === "d3");
+    expect(vitamin?.week).toBe(weekSunday(addDays(PLAN_START, 249)));
+    expect(lines.some((line) => line.stockId === "d3" && line.week === addDays(vitamin?.week ?? "", 7))).toBe(
+      false,
+    );
+    const names = lines.map((line) => line.name).join(" ");
+    expect(names).not.toMatch(/zinc|selenium|vittofer|\biron\b/i);
+
+    const bought = reducer(createStarter(), {
+      type: "buy-refill",
+      week: vitamin?.week ?? PLAN_START,
+      stockId: "d3",
+      add: vitamin?.add ?? 0,
+    });
+    expect(pile("d3", bought).count).toBe(1000);
+    expect(bought.groceryChecks[`${vitamin?.week}:refill-d3`]).toBe(true);
+    expect(projectRefills(bought, PLAN_START).find((line) => line.stockId === "d3")?.week).not.toBe(
+      vitamin?.week,
+    );
+  });
+
+  it("does not turn a paused Jamieson bottle back on after the plan has been updated", () => {
+    const paused = reducer(createStarter(), { type: "set-paused", stockId: "jamieson", paused: true });
+    expect(upgradeState(paused).piles.find((entry) => entry.id === "jamieson")?.paused).toBe(true);
+
+    const old = {
+      ...createStarter(),
+      plannerRevision: 1,
+      dayView: "hours" as unknown as ReturnType<typeof createStarter>["dayView"],
+      items: createStarter().items.filter((item) => item.id !== "fenugreek"),
+      piles: createStarter().piles.map((entry) =>
+        entry.id === "jamieson" ? { ...entry, paused: true, count: null } : entry,
+      ),
+    };
+    const upgraded = upgradeState(old);
+    expect(upgraded.dayView).toBe("timeline");
+    expect(upgraded.plannerRevision).toBe(2);
+    expect(pile("jamieson", upgraded)).toMatchObject({ paused: false, count: 30 });
+    expect(upgraded.items.some((item) => item.id === "fenugreek")).toBe(true);
+    expect(row("2026-10-18", "jamieson", upgraded)?.status).toBe("due");
   });
 });

@@ -25,7 +25,10 @@ export type ItemRule =
   | "ashwagandha"
   | "minoxidil"
   | "zinc"
-  | "jamieson";
+  | "jamieson"
+  | "zaatar"
+  | "fenugreek"
+  | "clove";
 
 export interface Slot {
   id: SlotId;
@@ -90,10 +93,12 @@ export interface Profile {
   weightKg: number;
 }
 
-export type DayView = "list" | "timeline" | "hours";
+export type DayView = "timeline" | "week";
+export const PLANNER_REVISION = 2;
 
 export interface PlannerState {
   version: 1;
+  plannerRevision: number;
   dayView: DayView;
   planStart: string;
   profile: Profile;
@@ -101,6 +106,7 @@ export interface PlannerState {
   piles: StockPile[];
   items: PlanItem[];
   checks: Record<string, boolean>;
+  groceryChecks: Record<string, boolean>;
   foods: FoodNeed[];
   foodWeek: string;
   optionalBuys: OptionalBuy[];

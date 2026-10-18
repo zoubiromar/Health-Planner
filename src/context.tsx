@@ -13,7 +13,7 @@ import { reducer, type Action } from "./model/reducer";
 import { loadState, saveState } from "./model/storage";
 import type { PlannerState } from "./model/types";
 
-export type View = "today" | "plan" | "cabinet" | "groceries";
+export type View = "today" | "plan" | "groceries";
 
 interface PlannerContextValue {
   state: PlannerState;

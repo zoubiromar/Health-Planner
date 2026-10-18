@@ -34,7 +34,7 @@ export function AlertsDialog() {
         </li>
         <li>
           Check doses off in this app. When something is out of stock, Today says so. Calendar does
-          not know what is in the cabinet.
+          not know which week you shopped.
         </li>
       </ol>
       <p className="quiet">

@@ -44,17 +44,47 @@ export function pileFor(state: PlannerState, item: PlanItem): StockPile | undefi
   return state.piles.find((pile) => pile.id === item.stockId);
 }
 
+export function isJamiesonDay(planStart: string, iso: string): boolean {
+  const offset = daysBetween(planStart, iso);
+  return offset >= 0 && offset % 5 === 0;
+}
+
+export function jamiesonIsOn(state: PlannerState): boolean {
+  const pile = state.piles.find((entry) => entry.id === "jamieson");
+  return Boolean(pile && !pile.paused);
+}
+
 export function matchesRule(state: PlannerState, item: PlanItem, iso: string): boolean {
   if (iso < state.planStart) return false;
   const owned = pileFor(state, item);
   if (owned?.paused) return false;
   if (item.rule === "minoxidil" && state.minoxidil !== "yes") return false;
+  if (
+    jamiesonIsOn(state) &&
+    isJamiesonDay(state.planStart, iso) &&
+    (item.id === "centrum" || item.id === "magnesium")
+  ) {
+    return false;
+  }
 
   switch (item.rule) {
     case "daily":
-    case "jamieson":
     case "minoxidil":
       return true;
+    case "jamieson":
+      return isJamiesonDay(state.planStart, iso);
+    case "zaatar": {
+      const day = weekday(iso);
+      return day === 0 || day === 2 || day === 4;
+    }
+    case "fenugreek": {
+      const offset = daysBetween(state.planStart, iso);
+      return offset >= 0 && offset % 5 === 2;
+    }
+    case "clove": {
+      const day = weekday(iso);
+      return day === 3 || day === 6;
+    }
     case "strength":
       return isStrengthDay(iso);
     case "forcapil":
@@ -99,21 +129,9 @@ function decorate(state: PlannerState, item: PlanItem, iso: string): DueRow {
   return { item, status: "due", reviewNote };
 }
 
-export function rowWarning(state: PlannerState, item: PlanItem): string | null {
-  const jamiesonOn = state.piles.some((pile) => pile.id === "jamieson" && !pile.paused);
-  const magnesiumOn = state.piles.some((pile) => pile.id === "magnesium" && !pile.paused);
-
-  if (item.id === "jamieson" && magnesiumOn) {
-    return "The evening magnesium is also on. Together these are a lot of magnesium.";
-  }
-  if (item.id === "magnesium" && jamiesonOn) {
-    return "Jamieson is also on. Three caplets already contain 450 mg of magnesium.";
-  }
-  if (item.id === "zinc" && jamiesonOn) {
-    return "Jamieson already contains zinc. Using both stacks zinc.";
-  }
+export function rowWarning(_state: PlannerState, item: PlanItem): string | null {
   if (item.id === "zinc") {
-    return "50 mg is above the usual daily upper limit. Take it with dinner, every other day, and stop if it causes nausea.";
+    return "50 mg is above the usual daily upper limit. It stays off because Centrum, the hair capsule, and Jamieson already contain zinc.";
   }
   return null;
 }

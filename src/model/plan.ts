@@ -1,6 +1,8 @@
 import { weekSunday } from "./dates";
 import {
   PLAN_START,
+  PLANNER_REVISION,
+  type DayView,
   type FoodNeed,
   type OptionalBuy,
   type PlanItem,
@@ -142,7 +144,7 @@ const piles: StockPile[] = [
     unit: "capsules",
     count: 120,
     bottleSize: 120,
-    dailyUse: 1,
+    dailyUse: 0.8,
     lowAt: 7,
   }),
   pile({
@@ -170,13 +172,14 @@ const piles: StockPile[] = [
     id: "jamieson",
     name: "Jamieson Power for Men",
     unit: "caplets",
-    count: null,
+    count: 30,
     bottleSize: 30,
-    dailyUse: 3,
-    lowAt: 21,
-    paused: true,
+    dailyUse: 0.6,
+    lowAt: 6,
+    paused: false,
+    inStock: true,
     pauseReason:
-      "Three caplets add 30 mg of zinc and 450 mg of magnesium on top of the evening magnesium. That much magnesium often upsets the stomach, and the label warns of diarrhea. Leave it off the daily list. If you use it later, pause the separate magnesium first.",
+      "Three caplets every 5th day. Centrum is skipped that morning and the evening magnesium is skipped that night, so the zinc and magnesium are not stacked.",
   }),
   pile({
     id: "minoxidil",
@@ -195,7 +198,7 @@ const piles: StockPile[] = [
     id: "centrum",
     name: "Centrum EC4",
     unit: "tablets",
-    count: null,
+    count: 30,
     bottleSize: 30,
     dailyUse: 1,
     lowAt: 7,
@@ -310,21 +313,21 @@ const items: PlanItem[] = [
     slotId: "breakfast",
     name: "Centrum EC4",
     dose: "1 tablet",
-    note: "With food. One tablet covers a broad multivitamin, including some vitamin D, zinc, selenium, and iron. It does not replace the two vitamin D softgels, and the 50 mg zinc tablet stays off.",
+    note: "With food. Skipped on a Jamieson day. It does not replace the two vitamin D softgels, and the 50 mg zinc tablet stays off.",
     consume: 1,
     rule: "daily",
     order: 4,
   },
   {
-    id: "jamieson",
-    stockId: "jamieson",
+    id: "coconut-oil",
+    stockId: "coconut",
     slotId: "breakfast",
-    name: "Jamieson Power for Men",
-    dose: "3 caplets",
-    note: "Only if you have paused the evening magnesium. Take them with the meal.",
-    consume: 3,
-    rule: "jamieson",
-    order: 4,
+    name: "Virgin coconut oil",
+    dose: "1 teaspoon",
+    note: "On the food with the vitamin D, so the softgels have some fat.",
+    consume: 0,
+    rule: "daily",
+    order: 5,
   },
   {
     id: "snack-am",
@@ -380,6 +383,17 @@ const items: PlanItem[] = [
     order: 2,
   },
   {
+    id: "jamieson",
+    stockId: "jamieson",
+    slotId: "lunch",
+    name: "Jamieson Power for Men",
+    dose: "3 caplets",
+    note: "Every 5th day. Centrum stays off this morning, and the evening magnesium stays off tonight.",
+    consume: 3,
+    rule: "jamieson",
+    order: 3,
+  },
+  {
     id: "walk",
     slotId: "movement",
     name: "Short walk",
@@ -414,7 +428,7 @@ const items: PlanItem[] = [
     slotId: "dinner",
     name: "Dinner",
     dose: "Warm, and smaller than you think",
-    note: "Starch, a protein, and greens. Coconut oil or zaatar on the food is enough. Clove stays a pinch in the cooking.",
+    note: "Starch, a protein, and greens. Zaatar, fenugreek, and clove show up on their own days.",
     consume: 0,
     rule: "daily",
     order: 0,
@@ -436,7 +450,7 @@ const items: PlanItem[] = [
     slotId: "night",
     name: "Magnesium bisglycinate",
     dose: "1 capsule · 200 mg",
-    note: "After dinner. One capsule is the evening dose while appetite is still coming back.",
+    note: "After dinner, on nights that are not a Jamieson day. Three Jamieson caplets already contain 450 mg of magnesium.",
     consume: 1,
     rule: "daily",
     order: 0,
@@ -472,6 +486,39 @@ const items: PlanItem[] = [
     note: "Evening application, on dry hair, the way you were shown.",
     consume: 0,
     rule: "minoxidil",
+    order: 2,
+  },
+  {
+    id: "zaatar",
+    stockId: "zaatar",
+    slotId: "breakfast",
+    name: "Zaatar",
+    dose: "A pinch on the food",
+    note: "Sunday, Tuesday, and Thursday. On eggs, yogurt, or lentils.",
+    consume: 0,
+    rule: "zaatar",
+    order: 6,
+  },
+  {
+    id: "fenugreek",
+    stockId: "fenugreek",
+    slotId: "dinner",
+    name: "Fenugreek seeds",
+    dose: "A pinch in the food",
+    note: "Every 5th day, off the Jamieson days. A pinch, not a spoon and not a capsule.",
+    consume: 0,
+    rule: "fenugreek",
+    order: 1,
+  },
+  {
+    id: "clove",
+    stockId: "clove",
+    slotId: "dinner",
+    name: "Clove",
+    dose: "A pinch in the cooking",
+    note: "Wednesday and Saturday. Spice only, never clove oil.",
+    consume: 0,
+    rule: "clove",
     order: 2,
   },
 ];
@@ -514,12 +561,14 @@ const optionalBuys: OptionalBuy[] = [
 export function createStarter(): PlannerState {
   return {
     version: 1,
+    plannerRevision: PLANNER_REVISION,
     planStart: PLAN_START,
     profile: { age: 28, heightCm: 168, weightKg: 54 },
     slots: slots.map((slot) => ({ ...slot })),
     piles: piles.map((entry) => ({ ...entry })),
     items: items.map((item) => ({ ...item })),
     checks: {},
+    groceryChecks: {},
     foods: foods.map((food) => ({ ...food })),
     foodWeek: weekSunday(PLAN_START),
     optionalBuys: optionalBuys.map((buy) => ({ ...buy })),
@@ -529,7 +578,38 @@ export function createStarter(): PlannerState {
     minoxidil: "yes",
     perfectilContinue: false,
     blank: false,
-    dayView: "list",
+    dayView: "timeline",
+  };
+}
+
+const REFRESH_IDS = ["jamieson", "centrum", "magnesium", "coconut-oil", "zaatar", "fenugreek", "clove"];
+
+function normalizeDayView(view: DayView | "list" | "hours" | undefined): DayView {
+  return view === "week" ? "week" : "timeline";
+}
+
+function migrateRevision(state: PlannerState, starter: PlannerState): PlannerState {
+  const freshItems = starter.items.filter((item) => REFRESH_IDS.includes(item.id));
+  const piles = state.piles.map((entry) => {
+    if (entry.id === "centrum" && entry.count === null) {
+      const fresh = starter.piles.find((pile) => pile.id === "centrum");
+      return fresh ? { ...fresh, inStock: entry.inStock } : entry;
+    }
+    if (entry.id === "jamieson") {
+      const fresh = starter.piles.find((pile) => pile.id === "jamieson");
+      if (!fresh) return entry;
+      return { ...fresh, count: entry.count ?? fresh.count, inStock: true, paused: false };
+    }
+    return entry;
+  });
+  const known = new Set(piles.map((pile) => pile.id));
+  const missingPiles = starter.piles.filter((pile) => !known.has(pile.id));
+
+  return {
+    ...state,
+    plannerRevision: PLANNER_REVISION,
+    piles: [...piles, ...missingPiles],
+    items: [...state.items.filter((item) => !REFRESH_IDS.includes(item.id)), ...freshItems.map((item) => ({ ...item }))],
   };
 }
 
@@ -537,8 +617,13 @@ export function upgradeState(state: PlannerState): PlannerState {
   const starter = createStarter();
   let next: PlannerState = {
     ...state,
-    dayView: state.dayView ?? "list",
+    plannerRevision: state.plannerRevision ?? 1,
+    dayView: normalizeDayView(state.dayView),
+    groceryChecks: state.groceryChecks ?? {},
   };
+  if (next.plannerRevision < PLANNER_REVISION) {
+    next = migrateRevision(next, starter);
+  }
 
   if (!next.piles.some((pile) => pile.id === "centrum")) {
     const pile = starter.piles.find((entry) => entry.id === "centrum");
