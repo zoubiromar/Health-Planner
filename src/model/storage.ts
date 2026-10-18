@@ -1,4 +1,4 @@
-import { createStarter } from "./plan";
+import { createStarter, upgradeState } from "./plan";
 import type { PlannerState } from "./types";
 
 export const STORAGE_KEY = "health-planner-v1";
@@ -12,7 +12,7 @@ export function loadState(storage: Pick<Storage, "getItem"> | null = safeStorage
     if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.items) || !Array.isArray(parsed.slots)) {
       return createStarter();
     }
-    return parsed;
+    return upgradeState(parsed);
   } catch {
     return createStarter();
   }

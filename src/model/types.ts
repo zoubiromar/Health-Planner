@@ -90,8 +90,11 @@ export interface Profile {
   weightKg: number;
 }
 
+export type DayView = "list" | "timeline" | "hours";
+
 export interface PlannerState {
   version: 1;
+  dayView: DayView;
   planStart: string;
   profile: Profile;
   slots: Slot[];

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { bmi, daysBetween, proteinTarget, weekSunday } from "./dates";
 import { alertSlots, buildCalendar } from "./ics";
-import { createStarter } from "./plan";
+import { createStarter, upgradeState } from "./plan";
 import { reducer } from "./reducer";
 import {
   daysOfSupply,
@@ -33,8 +33,12 @@ describe("starter schedule", () => {
     expect(row("2026-10-18", "walk", state)?.status).toBe("due");
     expect(row("2026-10-18", "zinc", state)).toBeUndefined();
     expect(row("2026-10-18", "jamieson", state)).toBeUndefined();
+    expect(row("2026-10-18", "centrum", state)?.status).toBe("due");
+    expect(row("2026-10-18", "minoxidil-am", state)?.item.slotId).toBe("wake");
+    expect(row("2026-10-18", "minoxidil-pm", state)?.item.slotId).toBe("night");
     expect(row("2026-10-18", "minoxidil", state)).toBeUndefined();
     expect(row("2026-10-18", "ashwagandha", state)?.status).toBe("due");
+    expect(rowsForDate(state, "2026-10-17")).toEqual([]);
   });
 
   it("alternates Perfectil and strength on the next days", () => {
@@ -237,11 +241,71 @@ describe("profile and the blank plan", () => {
     expect(row("2026-10-18", "tea", state)?.status).toBe("due");
   });
 
-  it("adds minoxidil only after it is confirmed in the house", () => {
-    const state = reducer(createStarter(), { type: "answer-minoxidil", answer: "yes" });
-    expect(row("2026-10-18", "minoxidil", state)?.status).toBe("due");
+  it("keeps both minoxidil applications off when they are declined", () => {
     const declined = reducer(createStarter(), { type: "answer-minoxidil", answer: "no" });
-    expect(row("2026-10-18", "minoxidil", declined)).toBeUndefined();
+    expect(row("2026-10-18", "minoxidil-am", declined)).toBeUndefined();
+    expect(row("2026-10-18", "minoxidil-pm", declined)).toBeUndefined();
+  });
+
+  it("upgrades an older save with Centrum and two minoxidil applications", () => {
+    const current = createStarter();
+    const legacy = {
+      ...current,
+      dayView: undefined as unknown as typeof current.dayView,
+      minoxidil: "unanswered" as const,
+      checks: { "2026-10-18:d3": true, "2026-10-18:minoxidil": true },
+      items: [
+        ...current.items.filter(
+          (item) => item.id !== "centrum" && item.id !== "minoxidil-am" && item.id !== "minoxidil-pm",
+        ),
+        {
+          id: "minoxidil",
+          stockId: "minoxidil",
+          slotId: "night" as const,
+          name: "Minoxidil",
+          dose: "Apply as shown",
+          note: "Night only.",
+          consume: 0,
+          rule: "minoxidil" as const,
+          order: 2,
+        },
+      ],
+      piles: current.piles
+        .filter((entry) => entry.id !== "centrum")
+        .map((entry) =>
+          entry.id === "minoxidil" ? { ...entry, count: 1, inStock: false, paused: true } : entry,
+        ),
+      slots: current.slots.map((slot) =>
+        slot.id === "wake" ? { ...slot, alertTitle: "Mint tea" } : slot,
+      ),
+    };
+
+    const upgraded = upgradeState(legacy);
+    expect(upgraded.dayView).toBe("list");
+    expect(upgraded.minoxidil).toBe("yes");
+    expect(upgraded.items.some((item) => item.id === "minoxidil")).toBe(false);
+    expect(row("2026-10-18", "centrum", upgraded)?.status).toBe("due");
+    expect(row("2026-10-18", "minoxidil-am", upgraded)?.status).toBe("due");
+    expect(row("2026-10-18", "minoxidil-pm", upgraded)?.status).toBe("due");
+    expect(upgraded.checks["2026-10-18:d3"]).toBe(true);
+    expect(upgraded.checks["2026-10-18:minoxidil-pm"]).toBe(true);
+    expect(pile("minoxidil", upgraded).count).toBe(1);
+    expect(upgraded.slots.find((slot) => slot.id === "wake")?.alertTitle).toBe(
+      "Mint tea and minoxidil",
+    );
+
+    const viewed = reducer(upgraded, { type: "set-day-view", view: "timeline" });
+    expect(viewed.dayView).toBe("timeline");
+
+    const memory = {
+      value: JSON.stringify(legacy),
+      getItem() {
+        return this.value;
+      },
+      setItem() {},
+    };
+    expect(loadState(memory).items.some((item) => item.id === "centrum")).toBe(true);
+    expect(loadState(memory).checks["2026-10-18:d3"]).toBe(true);
   });
 
   it("stores the plan on the device and ignores a broken save", () => {

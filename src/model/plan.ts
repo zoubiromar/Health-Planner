@@ -16,7 +16,7 @@ const slots: Slot[] = [
     time: "07:30",
     alert: true,
     period: "Morning",
-    alertTitle: "Mint tea",
+    alertTitle: "Mint tea and minoxidil",
   },
   {
     id: "breakfast",
@@ -187,9 +187,18 @@ const piles: StockPile[] = [
     dailyUse: 0,
     lowAt: 0,
     tracked: false,
-    inStock: false,
-    paused: true,
-    pauseReason: "Apply it the way your dermatologist showed you.",
+    inStock: true,
+    paused: false,
+    pauseReason: "Apply to a dry scalp, morning and night, the way you were shown.",
+  }),
+  pile({
+    id: "centrum",
+    name: "Centrum EC4",
+    unit: "tablets",
+    count: null,
+    bottleSize: 30,
+    dailyUse: 1,
+    lowAt: 7,
   }),
   pile({
     id: "coconut",
@@ -268,7 +277,7 @@ const items: PlanItem[] = [
     slotId: "breakfast",
     name: "Vitamin D3",
     dose: "2 softgels · 2000 IU",
-    note: "With the fatty part of breakfast: egg, yogurt, avocado, nuts, or a teaspoon of coconut oil.",
+    note: "With something fatty: egg, yogurt, avocado, nuts, or a teaspoon of coconut oil. Centrum already contains some vitamin D, so stay at two softgels.",
     consume: 2,
     rule: "daily",
     order: 1,
@@ -294,6 +303,17 @@ const items: PlanItem[] = [
     consume: 1,
     rule: "daily",
     order: 3,
+  },
+  {
+    id: "centrum",
+    stockId: "centrum",
+    slotId: "breakfast",
+    name: "Centrum EC4",
+    dose: "1 tablet",
+    note: "With food. One tablet covers a broad multivitamin, including some vitamin D, zinc, selenium, and iron. It does not replace the two vitamin D softgels, and the 50 mg zinc tablet stays off.",
+    consume: 1,
+    rule: "daily",
+    order: 4,
   },
   {
     id: "jamieson",
@@ -433,12 +453,23 @@ const items: PlanItem[] = [
     order: 1,
   },
   {
-    id: "minoxidil",
+    id: "minoxidil-am",
+    stockId: "minoxidil",
+    slotId: "wake",
+    name: "Minoxidil",
+    dose: "Apply to the scalp",
+    note: "Morning application, on dry hair, the way you were shown.",
+    consume: 0,
+    rule: "minoxidil",
+    order: 1,
+  },
+  {
+    id: "minoxidil-pm",
     stockId: "minoxidil",
     slotId: "night",
     name: "Minoxidil",
-    dose: "As you were shown",
-    note: "Apply it the way your dermatologist showed you.",
+    dose: "Apply to the scalp",
+    note: "Evening application, on dry hair, the way you were shown.",
     consume: 0,
     rule: "minoxidil",
     order: 2,
@@ -495,10 +526,58 @@ export function createStarter(): PlannerState {
     labDone: false,
     weights: [{ date: PLAN_START, kg: 54 }],
     disclaimerSeen: false,
-    minoxidil: "unanswered",
+    minoxidil: "yes",
     perfectilContinue: false,
     blank: false,
+    dayView: "list",
   };
+}
+
+export function upgradeState(state: PlannerState): PlannerState {
+  const starter = createStarter();
+  let next: PlannerState = {
+    ...state,
+    dayView: state.dayView ?? "list",
+  };
+
+  if (!next.piles.some((pile) => pile.id === "centrum")) {
+    const pile = starter.piles.find((entry) => entry.id === "centrum");
+    const item = starter.items.find((entry) => entry.id === "centrum");
+    if (pile && item) {
+      next = { ...next, piles: [...next.piles, pile], items: [...next.items, item] };
+    }
+  }
+
+  if (!next.items.some((item) => item.id === "minoxidil-am")) {
+    const added = starter.items.filter(
+      (item) => item.id === "minoxidil-am" || item.id === "minoxidil-pm",
+    );
+    const fresh = starter.piles.find((pile) => pile.id === "minoxidil");
+    const checks = { ...next.checks };
+    for (const [key, value] of Object.entries(checks)) {
+      if (!key.endsWith(":minoxidil")) continue;
+      checks[`${key.slice(0, -":minoxidil".length)}:minoxidil-pm`] = value;
+      delete checks[key];
+    }
+    next = {
+      ...next,
+      minoxidil: "yes",
+      checks,
+      items: [...next.items.filter((item) => item.id !== "minoxidil"), ...added],
+      piles: next.piles.map((pile) =>
+        pile.id === "minoxidil" && fresh
+          ? { ...fresh, count: pile.count }
+          : pile,
+      ),
+      slots: next.slots.map((slot) =>
+        slot.id === "wake" && slot.alertTitle === "Mint tea"
+          ? { ...slot, alertTitle: "Mint tea and minoxidil" }
+          : slot,
+      ),
+    };
+  }
+
+  return next;
 }
 
 export function magnesium300Pile(count: number): StockPile {

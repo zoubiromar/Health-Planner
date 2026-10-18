@@ -68,7 +68,7 @@ export function Plan() {
             );
           })}
         </div>
-        <p className="quiet">Choose a day, then open Today to check it off.</p>
+        <p className="quiet">Choose a day. Today opens that checklist, including tomorrow.</p>
       </section>
 
       <section className="section" aria-labelledby="times-title">

@@ -1,7 +1,7 @@
 import { checkKey, weekSunday } from "./dates";
 import { createStarter, magnesium300Pile } from "./plan";
 import { pileFor, rowsForDate } from "./schedule";
-import type { PlannerState, SlotId } from "./types";
+import type { DayView, PlannerState, SlotId } from "./types";
 
 export type Action =
   | { type: "toggle-check"; date: string; itemId: string }
@@ -13,6 +13,7 @@ export type Action =
   | { type: "add-weight"; date: string; kg: number }
   | { type: "dismiss-disclaimer" }
   | { type: "answer-minoxidil"; answer: "yes" | "no" }
+  | { type: "set-day-view"; view: DayView }
   | { type: "toggle-food"; id: string }
   | { type: "restock"; stockId: string; add: number }
   | { type: "set-lab-done"; done: boolean }
@@ -95,6 +96,9 @@ export function reducer(state: PlannerState, action: Action): PlannerState {
     }
     case "dismiss-disclaimer":
       return { ...state, disclaimerSeen: true };
+    case "set-day-view":
+      if (action.view !== "list" && action.view !== "timeline" && action.view !== "hours") return state;
+      return { ...state, dayView: action.view };
     case "answer-minoxidil": {
       if (action.answer === "no") {
         return mapPile({ ...state, minoxidil: "no" }, "minoxidil", (pile) => ({
@@ -195,6 +199,7 @@ export function reducer(state: PlannerState, action: Action): PlannerState {
         labDone: false,
         minoxidil: "unanswered",
         perfectilContinue: false,
+        dayView: state.dayView,
         disclaimerSeen: state.disclaimerSeen,
         weights: state.weights,
         profile: state.profile,
@@ -208,6 +213,7 @@ export function reducer(state: PlannerState, action: Action): PlannerState {
         disclaimerSeen: state.disclaimerSeen,
         weights: state.weights.length > 0 ? state.weights : starter.weights,
         profile: state.profile,
+        dayView: state.dayView,
       };
     }
     case "sync-food-week": {

@@ -45,6 +45,7 @@ export function pileFor(state: PlannerState, item: PlanItem): StockPile | undefi
 }
 
 export function matchesRule(state: PlannerState, item: PlanItem, iso: string): boolean {
+  if (iso < state.planStart) return false;
   const owned = pileFor(state, item);
   if (owned?.paused) return false;
   if (item.rule === "minoxidil" && state.minoxidil !== "yes") return false;
