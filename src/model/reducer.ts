@@ -99,8 +99,7 @@ export function reducer(state: PlannerState, action: Action): PlannerState {
     case "dismiss-disclaimer":
       return { ...state, disclaimerSeen: true };
     case "set-day-view":
-      if (action.view !== "timeline" && action.view !== "week") return state;
-      return { ...state, dayView: action.view };
+      return { ...state, dayView: "timeline" };
     case "toggle-grocery": {
       const key = `${action.week}:${action.id}`;
       return {

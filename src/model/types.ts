@@ -93,7 +93,7 @@ export interface Profile {
   weightKg: number;
 }
 
-export type DayView = "timeline" | "week";
+export type DayView = "timeline";
 export const PLANNER_REVISION = 2;
 
 export interface PlannerState {

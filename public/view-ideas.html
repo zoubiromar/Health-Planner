@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Four ways to see the day</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f3efe4;
+        --bg-raised: #fffdf8;
+        --ink: #1c3a2e;
+        --muted: #4d6358;
+        --line: #e0d7c6;
+        --amber: #f3ddb0;
+        --amber-line: #e0b85a;
+        --green: #1c3a2e;
+        --serif: "Iowan Old Style", Palatino, Georgia, serif;
+        --sans: "Avenir Next", "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.45;
+      }
+      header, main { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
+      header { padding: 36px 0 12px; }
+      .eyebrow {
+        margin: 0;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      h1, h2, h3 { font-family: var(--serif); font-weight: 500; letter-spacing: -0.02em; margin: 0; }
+      h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.05; }
+      p { margin: 0; }
+      .lede { margin-top: 10px; font-size: 1.08rem; max-width: 46rem; }
+      .switch {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 22px 0 8px;
+      }
+      .switch button, .nav button, .chip, .line {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      .switch button {
+        border: 1px solid var(--line);
+        background: transparent;
+        border-radius: 999px;
+        padding: 10px 16px;
+      }
+      .switch button[aria-pressed="true"] {
+        background: var(--green);
+        color: #f7f3ea;
+        border-color: var(--green);
+      }
+      .why { color: var(--muted); min-height: 3rem; margin-bottom: 18px; }
+      .panel {
+        background: var(--bg-raised);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 18px;
+        margin-bottom: 28px;
+      }
+      .split { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+      .col h2 { font-size: 1.7rem; margin-bottom: 12px; }
+      .slot { margin-bottom: 16px; }
+      .slot h3 { font-size: 1.15rem; }
+      .slot time, .muted { color: var(--muted); }
+      .check, .line, .chip {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: transparent;
+        padding: 8px 0;
+      }
+      .check input, .line input { width: 1.15rem; height: 1.15rem; margin-top: 3px; accent-color: var(--green); }
+      .done strong, .chip.is-done, .line.is-done strong { text-decoration: line-through; }
+      .dose { display: block; color: var(--muted); font-size: 0.95rem; }
+      .focus { text-align: left; }
+      .focus-time { font-variant-numeric: tabular-nums; color: var(--muted); letter-spacing: 0.08em; }
+      .focus h2 { font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1; margin: 6px 0 18px; }
+      .focus .check { font-size: 1.2rem; padding: 12px 0; border-bottom: 1px solid var(--line); }
+      .nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+      .nav button {
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #fff;
+        padding: 10px 16px;
+      }
+      .dots { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+      .dots button {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        border: 0;
+        background: #d9d0c0;
+        padding: 0;
+      }
+      .dots button[aria-current="true"] { background: var(--ink); }
+      .ticket { background: #fffdf8; }
+      .ticket-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px dashed var(--line);
+        padding-bottom: 12px;
+        margin-bottom: 6px;
+      }
+      .line { border-bottom: 1px solid #f0ebe1; border-radius: 0; }
+      .when { width: 7.2rem; flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
+      .plates { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .plate {
+        background: var(--amber);
+        border-radius: 28px;
+        padding: 18px;
+        min-height: 220px;
+      }
+      .plate h2 { font-size: 1.8rem; margin-bottom: 8px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+      .chip {
+        width: auto;
+        border-radius: 999px;
+        background: #fffdf8;
+        border: 1px solid var(--amber-line);
+        padding: 8px 12px;
+      }
+      .chip.is-done { background: var(--green); color: #f7f3ea; border-color: var(--green); }
+      footer { width: min(1100px, calc(100% - 32px)); margin: 0 auto 40px; color: var(--muted); }
+      @media (max-width: 720px) {
+        .split, .plates { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">Sketches only</p>
+      <h1>Four ways to see Sunday</h1>
+      <p class="lede">
+        The planner itself stays on the timeline. These four are here so you can click around and
+        pick one, if any of them feels better. The ticks carry from one sketch to the next. This
+        sample is Sunday 18 October, a Jamieson day.
+      </p>
+      <div class="switch" role="tablist" aria-label="Sketches">
+        <button type="button" data-view="split" aria-pressed="true">Split day</button>
+        <button type="button" data-view="focus">One moment</button>
+        <button type="button" data-view="ticket">Day ticket</button>
+        <button type="button" data-view="plates">Plates</button>
+      </div>
+      <p class="why" id="why"></p>
+    </header>
+    <main id="stage"></main>
+    <footer>Nothing here is saved. Closing the page clears the ticks.</footer>
+    <script>
+      const why = {
+        split: "Morning on the left, the rest of the day on the right. It uses a wide screen, and the checklist stays.",
+        focus: "One time fills the page. You move to the next time when that one is done. Easier on a phone.",
+        ticket: "The whole day is one sheet, like a receipt. Fast to scan, with no cards to open.",
+        plates: "Each meal is a plate, and each thing on it is a chip you tap. Less like a form.",
+      };
+
+      const slots = [
+        { id: "wake", label: "Wake", time: "07:30", half: "am", plate: "Morning", items: [
+          ["tea", "Moroccan mint tea", "One glass"],
+          ["minoxidil-am", "Minoxidil", "Apply to the scalp"],
+        ]},
+        { id: "breakfast", label: "Breakfast", time: "08:00", half: "am", plate: "Morning", items: [
+          ["breakfast", "Small breakfast", "Half a plate counts"],
+          ["d3", "Vitamin D3", "2 softgels · 2000 IU"],
+          ["omega-am", "Omega-3", "1 softgel"],
+          ["probiotic", "Probiotic", "1 capsule"],
+          ["coconut-oil", "Virgin coconut oil", "1 teaspoon"],
+          ["zaatar", "Zaatar", "A pinch on the food"],
+        ]},
+        { id: "midmorning", label: "Mid-morning", time: "10:30", half: "am", plate: "Morning", items: [
+          ["snack-am", "Mid-morning snack", "Dried apricots and almonds"],
+        ]},
+        { id: "lunch", label: "Lunch", time: "13:00", half: "am", plate: "Midday", items: [
+          ["lunch", "Lunch", "One real plate"],
+          ["omega-pm", "Omega-3", "1 softgel"],
+          ["forcapil", "Forcapil", "2 capsules"],
+          ["jamieson", "Jamieson Power for Men", "3 caplets"],
+        ]},
+        { id: "movement", label: "After lunch", time: "13:45", half: "pm", plate: "Midday", items: [
+          ["walk", "Short walk", "Easy pace"],
+        ]},
+        { id: "afternoon", label: "Afternoon", time: "16:30", half: "pm", plate: "Afternoon", items: [
+          ["snack-pm", "Afternoon snack", "Yogurt or chocolate"],
+        ]},
+        { id: "dinner", label: "Dinner", time: "20:30", half: "pm", plate: "Evening", items: [
+          ["dinner", "Dinner", "Warm, and smaller than you think"],
+        ]},
+        { id: "night", label: "Night", time: "21:30", half: "pm", plate: "Evening", items: [
+          ["ashwagandha", "Ashwagandha", "1 capsule"],
+          ["minoxidil-pm", "Minoxidil", "Apply to the scalp"],
+        ]},
+      ];
+
+      const checked = new Set();
+      let view = "split";
+      let focusIndex = 0;
+
+      const stage = document.getElementById("stage");
+      const whyNode = document.getElementById("why");
+
+      document.querySelector(".switch").addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        view = button.dataset.view;
+        document.querySelectorAll(".switch button").forEach((node) => {
+          node.setAttribute("aria-pressed", String(node === button));
+        });
+        draw();
+      });
+
+      stage.addEventListener("change", (event) => {
+        if (event.target.matches('input[type="checkbox"]')) toggle(event.target.value);
+      });
+      stage.addEventListener("click", (event) => {
+        const chip = event.target.closest("[data-chip]");
+        if (chip) toggle(chip.dataset.chip);
+        const jump = event.target.closest("[data-jump]");
+        if (jump) {
+          focusIndex = Number(jump.dataset.jump);
+          draw();
+        }
+      });
+
+      function toggle(id) {
+        if (checked.has(id)) checked.delete(id);
+        else checked.add(id);
+        draw();
+      }
+
+      function box(id, name, dose) {
+        const on = checked.has(id);
+        return `<label class="check${on ? " done" : ""}"><input type="checkbox" value="${id}" ${on ? "checked" : ""} /><span><strong>${name}</strong><span class="dose">${dose}</span></span></label>`;
+      }
+
+      function draw() {
+        whyNode.textContent = why[view];
+        if (view === "split") stage.innerHTML = drawSplit();
+        else if (view === "focus") stage.innerHTML = drawFocus();
+        else if (view === "ticket") stage.innerHTML = drawTicket();
+        else stage.innerHTML = drawPlates();
+      }
+
+      function drawSplit() {
+        const column = (half, title) => {
+          const body = slots.filter((slot) => slot.half === half).map((slot) => `
+            <section class="slot">
+              <h3><time>${slot.time}</time> ${slot.label}</h3>
+              ${slot.items.map(([id, name, dose]) => box(id, name, dose)).join("")}
+            </section>`).join("");
+          return `<div class="col"><h2>${title}</h2>${body}</div>`;
+        };
+        return `<div class="panel split">${column("am", "Morning")}${column("pm", "Rest of the day")}</div>`;
+      }
+
+      function drawFocus() {
+        const slot = slots[focusIndex];
+        const prev = Math.max(0, focusIndex - 1);
+        const next = Math.min(slots.length - 1, focusIndex + 1);
+        const dots = slots.map((entry, index) => `<button type="button" data-jump="${index}" aria-label="${entry.label}" aria-current="${index === focusIndex}"></button>`).join("");
+        return `<div class="panel focus">
+          <p class="focus-time">${slot.time}</p>
+          <h2>${slot.label}</h2>
+          ${slot.items.map(([id, name, dose]) => box(id, name, dose)).join("")}
+          <div class="nav">
+            <button type="button" data-jump="${prev}">Previous time</button>
+            <button type="button" data-jump="${next}">Next time</button>
+          </div>
+          <div class="dots">${dots}</div>
+        </div>`;
+      }
+
+      function drawTicket() {
+        const rows = slots.flatMap((slot) => slot.items.map(([id, name, dose], index) => {
+          const on = checked.has(id);
+          const when = index === 0 ? `${slot.time}<br>${slot.label}` : "";
+          return `<label class="line${on ? " is-done" : ""}"><span class="when">${when}</span><input type="checkbox" value="${id}" ${on ? "checked" : ""} /><span><strong>${name}</strong><span class="dose">${dose}</span></span></label>`;
+        })).join("");
+        return `<div class="panel ticket"><div class="ticket-top"><div><p class="eyebrow">Sunday</p><h2>18 October</h2></div><p class="muted">Jamieson day<br>Centrum and magnesium wait</p></div>${rows}</div>`;
+      }
+
+      function drawPlates() {
+        const names = ["Morning", "Midday", "Afternoon", "Evening"];
+        const cards = names.map((name) => {
+          const mine = slots.filter((slot) => slot.plate === name);
+          const chips = mine.flatMap((slot) => slot.items.map(([id, item, dose]) => {
+            const on = checked.has(id) ? " is-done" : "";
+            return `<button type="button" class="chip${on}" data-chip="${id}">${item}<span class="dose">${dose}</span></button>`;
+          })).join("");
+          const time = mine.map((slot) => slot.time).join(" · ");
+          return `<article class="plate"><p class="muted">${time}</p><h2>${name}</h2><div class="chips">${chips}</div></article>`;
+        }).join("");
+        return `<div class="plates">${cards}</div>`;
+      }
+
+      draw();
+    </script>
+  </body>
+</html>

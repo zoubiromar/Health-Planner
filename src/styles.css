@@ -519,10 +519,6 @@ details .quiet {
   margin-top: 4px;
 }
 
-.segments-two {
-  grid-template-columns: repeat(2, 1fr);
-}
-
 .segments {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -660,57 +656,6 @@ details .quiet {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
-.week-board {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(220px, 78%);
-  gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 8px;
-}
-
-.week-col {
-  display: grid;
-  align-content: start;
-  gap: 8px;
-  min-width: 0;
-  padding: 12px;
-  scroll-snap-align: start;
-  background: var(--bg-raised);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-}
-
-.week-col.is-selected {
-  box-shadow: inset 0 0 0 1.5px var(--ink);
-}
-
-.week-col-head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  text-align: left;
-}
-
-.week-col .row {
-  padding: 10px;
-}
-
-.week-slot {
-  display: grid;
-  gap: 8px;
-}
-
-.week-slot .quiet {
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-}
-
 .year-strip {
   display: grid;
   grid-auto-flow: column;
@@ -829,15 +774,10 @@ details .quiet {
     padding: 48px 32px 64px;
   }
 
-  .week,
-  .week-board {
+  .week {
     grid-auto-flow: unset;
     grid-template-columns: repeat(7, minmax(0, 1fr));
     overflow: visible;
-  }
-
-  .week-board {
-    grid-auto-columns: unset;
   }
 }
 

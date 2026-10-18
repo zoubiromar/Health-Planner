@@ -20,12 +20,7 @@ import {
   rowWarning,
   visibleItemsForSlot,
 } from "../model/schedule";
-import type { DayView, DueRow, Slot } from "../model/types";
-
-const DAY_VIEWS: { id: DayView; label: string }[] = [
-  { id: "timeline", label: "Timeline" },
-  { id: "week", label: "Week" },
-];
+import type { DueRow, Slot } from "../model/types";
 
 export function Today() {
   const { state, dispatch, selectedDate, setSelectedDate, today, minutes, setView, setAlertsOpen } =
@@ -106,28 +101,9 @@ export function Today() {
             isToday={isToday}
             focus={focus}
             onOpen={() => {
-              if (focus.kind !== "item") return;
-              if (state.dayView !== "timeline") {
-                dispatch({ type: "set-day-view", view: "timeline" });
-              }
-              reveal(focus.slot.id, focus.item.id);
+              if (focus.kind === "item") reveal(focus.slot.id, focus.item.id);
             }}
           />
-
-          <div className="segments segments-two view-switch" role="tablist" aria-label="How to see this day">
-            {DAY_VIEWS.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                role="tab"
-                className="segment"
-                aria-selected={state.dayView === option.id}
-                onClick={() => dispatch({ type: "set-day-view", view: option.id })}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
 
           <div className="button-row">
             <button type="button" className="button button-primary" onClick={() => setAlertsOpen(true)}>
@@ -135,24 +111,14 @@ export function Today() {
             </button>
           </div>
 
-          {state.dayView === "week" ? (
-            <WeekBoard
-              selectedDate={selectedDate}
-              today={today}
-              planStart={state.planStart}
-              onSelect={setSelectedDate}
-              onGroceries={() => setView("groceries")}
-            />
-          ) : (
-            <TimelineView
-              grouped={grouped}
-              currentSlotId={isToday ? currentSlotId : ""}
-              openSlots={openSlots}
-              onToggle={(slotId, open) => setOpenSlots((current) => ({ ...current, [slotId]: open }))}
-              date={selectedDate}
-              onGroceries={() => setView("groceries")}
-            />
-          )}
+          <TimelineView
+            grouped={grouped}
+            currentSlotId={isToday ? currentSlotId : ""}
+            openSlots={openSlots}
+            onToggle={(slotId, open) => setOpenSlots((current) => ({ ...current, [slotId]: open }))}
+            date={selectedDate}
+            onGroceries={() => setView("groceries")}
+          />
 
           <p className="footnote">A missed dose stays missed. Nothing gets piled onto the night.</p>
         </>
@@ -288,70 +254,6 @@ function TimelineView({
   );
 }
 
-function WeekBoard({
-  selectedDate,
-  today,
-  planStart,
-  onSelect,
-  onGroceries,
-}: {
-  selectedDate: string;
-  today: string;
-  planStart: string;
-  onSelect: (iso: string) => void;
-  onGroceries: () => void;
-}) {
-  const { state } = usePlanner();
-  const days = weekDates(selectedDate);
-
-  return (
-    <div className="week-board" data-testid="day-week">
-      {days.map((iso) => {
-        const before = iso < planStart;
-        const dayRows = before ? [] : rowsForDate(state, iso);
-        return (
-          <section
-            key={iso}
-            className={iso === selectedDate ? "week-col is-selected" : "week-col"}
-            aria-current={iso === today ? "date" : undefined}
-          >
-            <button type="button" className="week-col-head" onClick={() => onSelect(iso)}>
-              <span className="day-name">{weekdayShort(iso)}</span>
-              <strong>{formatDayMonth(iso)}</strong>
-            </button>
-            {before ? (
-              <p className="quiet">Earlier</p>
-            ) : (
-              <div className="rows">
-                {state.slots.map((slot) => {
-                  const slotRows = visibleItemsForSlot(dayRows, slot.id);
-                  if (slotRows.length === 0) return null;
-                  return (
-                    <div key={slot.id} className="week-slot">
-                      <p className="quiet">
-                        {slot.time} {slot.label}
-                      </p>
-                      {slotRows.map((entry) => (
-                        <DoseRow
-                          key={entry.item.id}
-                          entry={entry}
-                          date={iso}
-                          compact
-                          onGroceries={onGroceries}
-                        />
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
 function NowCard({
   isToday,
   focus,
@@ -393,12 +295,10 @@ function DoseRow({
   entry,
   date,
   onGroceries,
-  compact = false,
 }: {
   entry: DueRow;
   date: string;
   onGroceries: () => void;
-  compact?: boolean;
 }) {
   const { state, dispatch } = usePlanner();
   const checked = Boolean(state.checks[checkKey(date, entry.item.id)]);
@@ -407,31 +307,30 @@ function DoseRow({
   const low = owned && entry.status === "due" ? isRunningLow(owned) : false;
   const supply = owned ? daysOfSupply(owned) : null;
   const disabled = entry.status !== "due";
-  const rowId = compact ? `week-row-${date}-${entry.item.id}` : `row-${entry.item.id}`;
 
   return (
     <article
-      id={rowId}
+      id={`row-${entry.item.id}`}
       className={disabled ? "row is-muted" : checked ? "row is-done" : "row"}
-          data-testid={compact ? `week-row-${date}-${entry.item.id}` : `row-${entry.item.id}`}
+      data-testid={`row-${entry.item.id}`}
     >
       <label className="check">
         <input
           type="checkbox"
           checked={checked}
           disabled={disabled}
-          data-testid={compact ? `week-check-${date}-${entry.item.id}` : `check-${entry.item.id}`}
-          aria-label={compact ? `${date}, ${entry.item.name}, ${entry.item.dose}` : `${entry.item.name}, ${entry.item.dose}`}
+          data-testid={`check-${entry.item.id}`}
+          aria-label={`${entry.item.name}, ${entry.item.dose}`}
           onChange={() => dispatch({ type: "toggle-check", date, itemId: entry.item.id })}
         />
         <div className="row-copy">
           <span className="row-title">
             <strong>{entry.item.name}</strong>
             {entry.status === "muted" ? <span className="pill pill-alert">Out of stock</span> : null}
-            {low && !compact ? <span className="pill">Running low</span> : null}
+            {low ? <span className="pill">Running low</span> : null}
             <em>{entry.item.dose}</em>
           </span>
-          {compact ? null : <p>{entry.item.note}</p>}
+          <p>{entry.item.note}</p>
           {entry.status === "muted" ? (
             <p className="flag">
               <button
@@ -444,17 +343,17 @@ function DoseRow({
               </button>
             </p>
           ) : null}
-          {!compact && entry.status === "paused-window" ? (
+          {entry.status === "paused-window" ? (
             <p className="flag">Paused this fortnight. It comes back after the two weeks.</p>
           ) : null}
-          {!compact && low ? (
+          {low ? (
             <p className="flag">Running low{supply !== null ? `, about ${supply} days` : ""}.</p>
           ) : null}
-          {!compact && owned && owned.count === 0 && entry.status === "due" ? (
+          {owned && owned.count === 0 && entry.status === "due" ? (
             <p className="flag">Count is at zero. Mark it out of stock if the bottle is empty.</p>
           ) : null}
-          {!compact && entry.reviewNote ? <p className="flag">{entry.reviewNote}</p> : null}
-          {!compact && warning ? <p className="flag">{warning}</p> : null}
+          {entry.reviewNote ? <p className="flag">{entry.reviewNote}</p> : null}
+          {warning ? <p className="flag">{warning}</p> : null}
         </div>
       </label>
     </article>

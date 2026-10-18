@@ -584,8 +584,8 @@ export function createStarter(): PlannerState {
 
 const REFRESH_IDS = ["jamieson", "centrum", "magnesium", "coconut-oil", "zaatar", "fenugreek", "clove"];
 
-function normalizeDayView(view: DayView | "list" | "hours" | undefined): DayView {
-  return view === "week" ? "week" : "timeline";
+function normalizeDayView(_view: DayView | "list" | "hours" | "week" | undefined): DayView {
+  return "timeline";
 }
 
 function migrateRevision(state: PlannerState, starter: PlannerState): PlannerState {
