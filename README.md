@@ -20,7 +20,13 @@ Show the schedule to your doctor if you want it confirmed. Repeat vitamin D and 
 
 This repository is public. The starter schedule is in the app. Your name, prescription photo, and clinic contacts are not. Checks, stock, weight, and profile edits stay in `localStorage` on the device. Do not commit personal notes or exports into the repo.
 
-## Run it
+## Open it
+
+The live site is [https://zoubiromar.github.io/Health-Planner/](https://zoubiromar.github.io/Health-Planner/). On an iPhone, open that link in Safari, tap Share, and choose **Add to Home Screen**.
+
+`localhost` only works on a computer where you have started the app yourself. The “connection refused” page means nothing is running there.
+
+## Run it locally
 
 ```bash
 npm install
