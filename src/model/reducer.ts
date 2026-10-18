@@ -1,7 +1,7 @@
 import { checkKey, weekSunday } from "./dates";
 import { createStarter, magnesium300Pile } from "./plan";
 import { pileFor, rowsForDate } from "./schedule";
-import type { DayView, PlannerState, SlotId } from "./types";
+import type { DayView, PlannerState, SlotId, ThemeName } from "./types";
 
 export type Action =
   | { type: "toggle-check"; date: string; itemId: string }
@@ -14,6 +14,7 @@ export type Action =
   | { type: "dismiss-disclaimer" }
   | { type: "answer-minoxidil"; answer: "yes" | "no" }
   | { type: "set-day-view"; view: DayView }
+  | { type: "set-theme"; theme: ThemeName }
   | { type: "toggle-grocery"; week: string; id: string }
   | { type: "buy-refill"; week: string; stockId: string; add: number }
   | { type: "toggle-food"; id: string }
@@ -99,7 +100,11 @@ export function reducer(state: PlannerState, action: Action): PlannerState {
     case "dismiss-disclaimer":
       return { ...state, disclaimerSeen: true };
     case "set-day-view":
-      return { ...state, dayView: "timeline" };
+      if (action.view !== "timeline" && action.view !== "plates") return state;
+      return { ...state, dayView: action.view };
+    case "set-theme":
+      if (action.theme !== "daylight" && action.theme !== "lamp") return state;
+      return { ...state, theme: action.theme };
     case "toggle-grocery": {
       const key = `${action.week}:${action.id}`;
       return {
@@ -217,6 +222,7 @@ export function reducer(state: PlannerState, action: Action): PlannerState {
         minoxidil: "unanswered",
         perfectilContinue: false,
         dayView: state.dayView,
+        theme: state.theme,
         disclaimerSeen: state.disclaimerSeen,
         weights: state.weights,
         profile: state.profile,
@@ -231,6 +237,7 @@ export function reducer(state: PlannerState, action: Action): PlannerState {
         weights: state.weights.length > 0 ? state.weights : starter.weights,
         profile: state.profile,
         dayView: state.dayView,
+        theme: state.theme,
       };
     }
     case "sync-food-week": {

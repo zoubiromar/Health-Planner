@@ -93,13 +93,15 @@ export interface Profile {
   weightKg: number;
 }
 
-export type DayView = "timeline";
+export type DayView = "timeline" | "plates";
+export type ThemeName = "daylight" | "lamp";
 export const PLANNER_REVISION = 2;
 
 export interface PlannerState {
   version: 1;
   plannerRevision: number;
   dayView: DayView;
+  theme: ThemeName;
   planStart: string;
   profile: Profile;
   slots: Slot[];

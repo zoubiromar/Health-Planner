@@ -43,6 +43,10 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   const minutes = minutesNow(clock);
 
   useEffect(() => {
+    document.documentElement.dataset.theme = state.theme;
+  }, [state.theme]);
+
+  useEffect(() => {
     const id = window.setInterval(() => setClock(new Date()), 30_000);
     return () => window.clearInterval(id);
   }, []);

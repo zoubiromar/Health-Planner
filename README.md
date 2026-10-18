@@ -41,7 +41,9 @@ npm run dev
 
 Open the printed local address. On a phone-width window, the three sections sit along the bottom: Today, Plan, and Groceries. On a wide window they sit in the left rail, and the page uses the width of the window up to 1280 pixels.
 
-Today can move to yesterday, tomorrow, and later days. Nothing is scheduled before 18 October 2026. The day is a timeline, and each time can be opened or closed.
+Today can move to yesterday, tomorrow, and later days. Nothing is scheduled before 18 October 2026. Timeline is the checklist, and each time can be opened or closed. Plates turns the same day into four meals you can tap.
+
+Daylight and Lamp sit at the top of every page. Daylight is the warm paper. Lamp is the evening green and gold.
 
 Four other layouts are sketched in [view-ideas.html](https://zoubiromar.github.io/Health-Planner/view-ideas.html). That page is only for comparing them. The planner itself stays on the timeline.
 

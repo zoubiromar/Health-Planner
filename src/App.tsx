@@ -13,15 +13,35 @@ const NAV: { id: View; label: string; icon: typeof IconToday }[] = [
 ];
 
 export function App() {
-  const { view, setView } = usePlanner();
+  const { state, dispatch, view, setView } = usePlanner();
 
   return (
     <div className="app">
-      <aside className="rail">
-        <div className="brand">
-          <p className="brand-mark">Health Planner</p>
-          <p className="brand-note">Appetite, then strength.</p>
+      <header className="topbar">
+        <p className="brand-mark">
+          <span className="mark" aria-hidden="true">
+            🍵
+          </span>
+          Health Planner
+        </p>
+        <div className="theme-switch" role="group" aria-label="Theme">
+          <button
+            type="button"
+            aria-pressed={state.theme === "daylight"}
+            onClick={() => dispatch({ type: "set-theme", theme: "daylight" })}
+          >
+            ☀️ Daylight
+          </button>
+          <button
+            type="button"
+            aria-pressed={state.theme === "lamp"}
+            onClick={() => dispatch({ type: "set-theme", theme: "lamp" })}
+          >
+            🌙 Lamp
+          </button>
         </div>
+      </header>
+      <aside className="rail">
         <nav className="rail-nav" aria-label="Sections">
           {NAV.map((item) => (
             <button

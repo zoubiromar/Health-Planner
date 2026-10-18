@@ -1,17 +1,50 @@
-:root {
+:root,
+html[data-theme="daylight"] {
   color-scheme: light;
-  --bg: #f3efe4;
+  --bg: #f4efe3;
   --bg-raised: #fffdf8;
   --ink: #1c3a2e;
   --muted: #4d6358;
   --line: #e0d7c6;
-  --amber: #f3ddb0;
+  --amber: #f6e3b8;
   --amber-line: #e0b85a;
   --green: #1c3a2e;
+  --on-accent: #f7f3ea;
   --danger: #8a4636;
+  --alert-bg: #f6e4dc;
+  --muted-bg: #f7f4ec;
+  --field: #fff;
+  --chip: #e7e1d4;
+  --bar: rgba(244, 239, 227, 0.94);
+  --nav-current: #e7f0e4;
+  --knob: #cfc6b6;
+  --backdrop: rgba(28, 58, 46, 0.46);
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: "Avenir Next", "Segoe UI", sans-serif;
   --shadow: 0 16px 40px rgba(28, 58, 46, 0.06);
+}
+
+html[data-theme="lamp"] {
+  color-scheme: dark;
+  --bg: #14241c;
+  --bg-raised: #24382c;
+  --ink: #f6f1e4;
+  --muted: #c9d4cb;
+  --line: #3c5648;
+  --amber: #3a3220;
+  --amber-line: #e0b85a;
+  --green: #e7d3a1;
+  --on-accent: #1c2414;
+  --danger: #f0c2b6;
+  --alert-bg: #4a2e28;
+  --muted-bg: #1b2e24;
+  --field: #1b2e24;
+  --chip: #1b2e24;
+  --bar: rgba(20, 36, 28, 0.94);
+  --nav-current: #315043;
+  --knob: #6d7f74;
+  --backdrop: rgba(8, 14, 11, 0.62);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
 }
 
 * {
@@ -74,6 +107,45 @@ h3 {
 
 .app {
   min-height: 100vh;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--bar);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+}
+
+.topbar .brand-mark {
+  font-size: 1.35rem;
+}
+
+.theme-switch {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--chip);
+}
+
+.theme-switch button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  padding: 7px 12px;
+  color: var(--muted);
+}
+
+.theme-switch button[aria-pressed="true"] {
+  background: var(--bg-raised);
+  color: var(--ink);
 }
 
 .main {
@@ -141,7 +213,7 @@ small {
   grid-template-columns: repeat(3, 1fr);
   gap: 4px;
   padding: 6px 10px calc(8px + env(safe-area-inset-bottom));
-  background: rgba(243, 239, 228, 0.94);
+  background: var(--bar);
   border-top: 1px solid var(--line);
   backdrop-filter: blur(12px);
 }
@@ -219,7 +291,7 @@ small {
 
 .button-primary {
   background: var(--green);
-  color: #f7f3ea;
+  color: var(--on-accent);
 }
 
 .button-quiet {
@@ -323,7 +395,7 @@ small {
 
 .pill-alert {
   color: var(--danger);
-  background: #f6e4dc;
+  background: var(--alert-bg);
 }
 
 .check input,
@@ -335,7 +407,7 @@ small {
 }
 
 .is-muted {
-  background: #f7f4ec;
+  background: var(--muted-bg);
 }
 
 .is-done strong {
@@ -435,7 +507,7 @@ select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #fff;
+  background: var(--field);
   padding: 10px 12px;
   font-size: 1rem;
 }
@@ -488,7 +560,7 @@ details .quiet {
 
 .pill.pill-alert {
   color: var(--danger);
-  background: #f6e4dc;
+  background: var(--alert-bg);
 }
 
 .day-tools {
@@ -526,7 +598,7 @@ details .quiet {
   margin-bottom: 14px;
   padding: 4px;
   border-radius: 999px;
-  background: #e7e1d4;
+  background: var(--chip);
 }
 
 .segment {
@@ -549,7 +621,7 @@ details .quiet {
   gap: 8px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #fff;
+  background: var(--field);
   padding: 6px 12px 6px 6px;
 }
 
@@ -562,7 +634,7 @@ details .quiet {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #cfc6b6;
+  background: var(--knob);
 }
 
 .switch[aria-checked="true"] .switch-knob {
@@ -712,7 +784,7 @@ details .quiet {
 }
 
 .dialog::backdrop {
-  background: rgba(28, 58, 46, 0.46);
+  background: var(--backdrop);
 }
 
 .dialog h2 {
@@ -732,10 +804,97 @@ details .quiet {
   outline-offset: 3px;
 }
 
+.segments-two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.plates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 4px 0 8px;
+}
+
+.plate {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 180px;
+  padding: 18px;
+  border: 1px solid var(--amber-line);
+  border-radius: 28px;
+  background: var(--amber);
+}
+
+.plate.is-current {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.plate h2 {
+  font-size: 1.8rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 100%;
+  border: 1px solid var(--amber-line);
+  border-radius: 999px;
+  background: var(--bg-raised);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.chip .dose {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.chip.is-done {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--on-accent);
+}
+
+.chip.is-done .dose,
+.chip.is-done strong {
+  color: inherit;
+}
+
+.chip.is-done strong {
+  text-decoration: line-through;
+}
+
+.chip.is-muted {
+  opacity: 0.62;
+}
+
+.mark {
+  margin-right: 0.25rem;
+}
+
+@media (max-width: 720px) {
+  .plates {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (min-width: 900px) {
   .app {
     display: grid;
     grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  .topbar {
+    grid-column: 1 / -1;
   }
 
   .tabs {
@@ -744,12 +903,12 @@ details .quiet {
 
   .rail {
     position: sticky;
-    top: 0;
+    top: 58px;
     display: flex;
     flex-direction: column;
     gap: 28px;
-    height: 100vh;
-    padding: 32px 20px;
+    height: calc(100vh - 58px);
+    padding: 28px 20px;
     border-right: 1px solid var(--line);
   }
 
@@ -767,7 +926,7 @@ details .quiet {
   }
 
   .rail-link[aria-current="page"] {
-    background: #e7f0e4;
+    background: var(--nav-current);
   }
 
   .main {
@@ -782,6 +941,20 @@ details .quiet {
 }
 
 @media (max-width: 640px) {
+  .topbar {
+    padding: 10px 12px;
+  }
+
+  .topbar .brand-mark {
+    font-size: 1.05rem;
+    white-space: nowrap;
+  }
+
+  .theme-switch button {
+    padding: 6px 8px;
+    font-size: 0.86rem;
+  }
+
   .profile-grid {
     grid-template-columns: 1fr;
   }

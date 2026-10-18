@@ -89,7 +89,12 @@ export function Groceries() {
       </div>
 
       <section className="section" aria-labelledby="food-title">
-        <h2 id="food-title">Buy for this week</h2>
+        <h2 id="food-title">
+          <span className="mark" aria-hidden="true">
+            🍑
+          </span>
+          Buy for this week
+        </h2>
         {foods.length === 0 ? (
           <p className="empty-inline">No plan days in this week.</p>
         ) : (
@@ -104,7 +109,12 @@ export function Groceries() {
 
       {!state.blank ? (
         <section className="section" aria-labelledby="refill-title">
-          <h2 id="refill-title">Bottles that run out</h2>
+          <h2 id="refill-title">
+            <span className="mark" aria-hidden="true">
+              💊
+            </span>
+            Bottles that run out
+          </h2>
           {weekRefills.length === 0 ? (
             <p className="empty-inline">No supplement runs out this week.</p>
           ) : (

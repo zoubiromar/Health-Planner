@@ -20,7 +20,30 @@ import {
   rowWarning,
   visibleItemsForSlot,
 } from "../model/schedule";
-import type { DueRow, Slot } from "../model/types";
+import type { DayView, DueRow, Slot, SlotId } from "../model/types";
+
+const SLOT_MARK: Record<SlotId, string> = {
+  wake: "🍵",
+  breakfast: "🍳",
+  midmorning: "🍑",
+  lunch: "🍽️",
+  movement: "🚶",
+  afternoon: "🍫",
+  dinner: "🍲",
+  night: "🌙",
+};
+
+const DAY_VIEWS: { id: DayView; label: string }[] = [
+  { id: "timeline", label: "Timeline" },
+  { id: "plates", label: "🍽 Plates" },
+];
+
+const PLATES: { id: string; title: string; mark: string; slots: SlotId[] }[] = [
+  { id: "morning", title: "Morning", mark: "🍵", slots: ["wake", "breakfast", "midmorning"] },
+  { id: "midday", title: "Midday", mark: "🍽️", slots: ["lunch", "movement"] },
+  { id: "afternoon", title: "Afternoon", mark: "🍫", slots: ["afternoon"] },
+  { id: "evening", title: "Evening", mark: "🌙", slots: ["dinner", "night"] },
+];
 
 export function Today() {
   const { state, dispatch, selectedDate, setSelectedDate, today, minutes, setView, setAlertsOpen } =
@@ -101,9 +124,28 @@ export function Today() {
             isToday={isToday}
             focus={focus}
             onOpen={() => {
-              if (focus.kind === "item") reveal(focus.slot.id, focus.item.id);
+              if (focus.kind !== "item") return;
+              if (state.dayView !== "timeline") {
+                dispatch({ type: "set-day-view", view: "timeline" });
+              }
+              reveal(focus.slot.id, focus.item.id);
             }}
           />
+
+          <div className="segments segments-two view-switch" role="tablist" aria-label="How to see this day">
+            {DAY_VIEWS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                role="tab"
+                className="segment"
+                aria-selected={state.dayView === option.id}
+                onClick={() => dispatch({ type: "set-day-view", view: option.id })}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
 
           <div className="button-row">
             <button type="button" className="button button-primary" onClick={() => setAlertsOpen(true)}>
@@ -111,6 +153,15 @@ export function Today() {
             </button>
           </div>
 
+          {state.dayView === "plates" ? (
+            <PlatesView
+              slots={state.slots}
+              rows={rows}
+              currentSlotId={isToday ? currentSlotId : ""}
+              date={selectedDate}
+              onGroceries={() => setView("groceries")}
+            />
+          ) : (
           <TimelineView
             grouped={grouped}
             currentSlotId={isToday ? currentSlotId : ""}
@@ -119,6 +170,7 @@ export function Today() {
             date={selectedDate}
             onGroceries={() => setView("groceries")}
           />
+          )}
 
           <p className="footnote">A missed dose stays missed. Nothing gets piled onto the night.</p>
         </>
@@ -237,7 +289,12 @@ function TimelineView({
               onClick={() => onToggle(slot.id, !open)}
             >
               <time dateTime={slot.time}>{slot.time}</time>
-              <h2>{slot.label}</h2>
+              <h2>
+                <span className="mark" aria-hidden="true">
+                  {SLOT_MARK[slot.id]}
+                </span>
+                {slot.label}
+              </h2>
               <span className="quiet">{open ? "Hide" : names.join(" · ")}</span>
             </button>
             {open ? (
@@ -251,6 +308,84 @@ function TimelineView({
         );
       })}
     </div>
+  );
+}
+
+function PlatesView({
+  slots,
+  rows,
+  currentSlotId,
+  date,
+  onGroceries,
+}: {
+  slots: Slot[];
+  rows: DueRow[];
+  currentSlotId: string;
+  date: string;
+  onGroceries: () => void;
+}) {
+  return (
+    <div className="plates" data-testid="day-plates">
+      {PLATES.map((plate) => {
+        const plateSlots = slots.filter((slot) => plate.slots.includes(slot.id));
+        const plateRows = plateSlots.flatMap((slot) => visibleItemsForSlot(rows, slot.id));
+        if (plateRows.length === 0) return null;
+        const times = plateSlots
+          .filter((slot) => visibleItemsForSlot(rows, slot.id).length > 0)
+          .map((slot) => slot.time)
+          .join(" · ");
+        const current = plate.slots.includes(currentSlotId as SlotId);
+        return (
+          <article key={plate.id} className={current ? "plate is-current" : "plate"}>
+            <p className="quiet">{times}</p>
+            <h2>
+              <span className="mark" aria-hidden="true">
+                {plate.mark}
+              </span>
+              {plate.title}
+            </h2>
+            <div className="chips">
+              {plateRows.map((entry) => (
+                <PlateChip key={entry.item.id} entry={entry} date={date} onGroceries={onGroceries} />
+              ))}
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function PlateChip({
+  entry,
+  date,
+  onGroceries,
+}: {
+  entry: DueRow;
+  date: string;
+  onGroceries: () => void;
+}) {
+  const { state, dispatch } = usePlanner();
+  const checked = Boolean(state.checks[checkKey(date, entry.item.id)]);
+  const muted = entry.status !== "due";
+
+  return (
+    <button
+      type="button"
+      className={muted ? "chip is-muted" : checked ? "chip is-done" : "chip"}
+      aria-pressed={checked}
+      data-testid={`plate-${entry.item.id}`}
+      onClick={() => {
+        if (muted) {
+          onGroceries();
+          return;
+        }
+        dispatch({ type: "toggle-check", date, itemId: entry.item.id });
+      }}
+    >
+      <strong>{entry.item.name}</strong>
+      <span className="dose">{entry.item.dose}</span>
+    </button>
   );
 }
 

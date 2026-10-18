@@ -579,13 +579,14 @@ export function createStarter(): PlannerState {
     perfectilContinue: false,
     blank: false,
     dayView: "timeline",
+    theme: "daylight",
   };
 }
 
 const REFRESH_IDS = ["jamieson", "centrum", "magnesium", "coconut-oil", "zaatar", "fenugreek", "clove"];
 
-function normalizeDayView(_view: DayView | "list" | "hours" | "week" | undefined): DayView {
-  return "timeline";
+function normalizeDayView(view: DayView | "list" | "hours" | "week" | undefined): DayView {
+  return view === "plates" ? "plates" : "timeline";
 }
 
 function migrateRevision(state: PlannerState, starter: PlannerState): PlannerState {
@@ -619,6 +620,7 @@ export function upgradeState(state: PlannerState): PlannerState {
     ...state,
     plannerRevision: state.plannerRevision ?? 1,
     dayView: normalizeDayView(state.dayView),
+    theme: state.theme === "lamp" ? "lamp" : "daylight",
     groceryChecks: state.groceryChecks ?? {},
   };
   if (next.plannerRevision < PLANNER_REVISION) {
